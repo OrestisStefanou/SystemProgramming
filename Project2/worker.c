@@ -1,42 +1,57 @@
-#include"client.h"
+#include"pipe.h"
 #include<ctype.h>
 
 int main(int argc, char const *argv[])
 {   
     printf("Worker %d running\n",getpid());
     int server_fifo_fd,client_fifo_fd;
-    struct data_to_pass_st my_data;
-    int times_to_send;
+    File_Stats stats_data;
     char client_fifo[256];
     char server_fifo[256];
-    sprintf(server_fifo,SERVER_FIFO_NAME,getpid());
-    server_fifo_fd = open(server_fifo,O_WRONLY);
-    if (server_fifo_fd==-1)
-    {
-        fprintf(stderr,"No server\n");
-        exit(EXIT_FAILURE);
-    }
-    my_data.client_pid = getpid();
-    sprintf(client_fifo,CLIENT_FIFO_NAME,my_data.client_pid);
+    char request[100];
+
+    //TESTING DATA
+    set_date(&stats_data.file_date,1,1,2005);
+    strcpy(stats_data.Country,"Cyprus");
+    strcpy(stats_data.Disease,"Malazavragka");
+    for(int i=0;i<4;i++)
+        stats_data.Age_counter[i]=getpid();
+    //
+
+    sprintf(server_fifo,SERVER_FIFO_NAME,getpid()); //Create server pipe name
+
+    sprintf(client_fifo,CLIENT_FIFO_NAME,getpid());//Create pipe to read from the server
     if (mkfifo(client_fifo,0777)==-1)
     {
         fprintf(stderr,"Error during mkfifo from client\n");
         exit(EXIT_FAILURE);
     }
     
-    for(times_to_send=0;times_to_send<1;times_to_send++){
-        sprintf(my_data.some_data,"Hello from %d",my_data.client_pid);
-        printf("%d sent %s, ", my_data.client_pid, my_data.some_data);
-        write(server_fifo_fd, &my_data, sizeof(my_data));
-        client_fifo_fd = open(client_fifo, O_RDONLY);
-        if (client_fifo_fd!=-1)
-        {
-            if(read(client_fifo_fd,&my_data,sizeof(my_data))>0){
-                printf("received:%s\n",my_data.some_data);
-            }
-            close(client_fifo_fd);
+    client_fifo_fd = open(client_fifo, O_RDONLY);//Wait for server to open it and to send a request
+    if (client_fifo_fd!=-1)
+    {   //Read request from the server
+        while(read(client_fifo_fd,request,sizeof(request))>0){
+            printf("Server request is %s",request);
+            memset(request,0,100);  //Empty the buffer to read next request
         }
+        close(client_fifo_fd);
     }
+    else
+    {
+        printf("Something went wrong with open(client)\n");
+        unlink(client_fifo);
+        exit(EXIT_FAILURE);
+    }
+    
+    server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+    if (server_fifo_fd==-1)
+    {
+        fprintf(stderr,"No server\n");
+        exit(EXIT_FAILURE);
+    }
+    write(server_fifo_fd, &stats_data, sizeof(stats_data));
+    strcpy(stats_data.Country,"Greece");
+    write(server_fifo_fd, &stats_data, sizeof(stats_data));
     close(server_fifo_fd);
     unlink(client_fifo);
     exit(EXIT_SUCCESS);
