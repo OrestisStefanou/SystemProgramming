@@ -1,13 +1,20 @@
 #include"pipe.h"
 #include<ctype.h>
 
+char client_fifo[256];  //Client fifo pipe name
+char server_fifo[256];  //Server fifo pipe name
+
+void terminate(int sig){
+    printf("Got the kill signal\n");
+    unlink(client_fifo);
+    exit(EXIT_SUCCESS);
+}
+
 int main(int argc, char const *argv[])
 {   
     printf("Worker %d running\n",getpid());
     int server_fifo_fd,client_fifo_fd;
     File_Stats stats_data;
-    char client_fifo[256];
-    char server_fifo[256];
     char request[100];
 
     //TESTING DATA
