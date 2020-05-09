@@ -10,6 +10,7 @@
 #include<sys/stat.h>
 #include"mydate.h"
 #include<signal.h>
+#include<dirent.h>
 
 #define SERVER_FIFO_NAME "/tmp/serv_%d_fifo"
 #define CLIENT_FIFO_NAME "/tmp/cli_%d_fifo"

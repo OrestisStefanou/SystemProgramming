@@ -12,7 +12,7 @@ int main(int argc, char const *argv[])
     char *args[]={"./worker",NULL};
     int ret;
     int fds[5];     //Array with the file descriptors of the open pipes(useless??)
-    int pids[5];    //Array with the pids of the workers
+    pid_t pids[5];    //Array with the pids of the workers
 
     //Create 5 workers
     for(int i=0;i<3;i++){
@@ -38,9 +38,22 @@ int main(int argc, char const *argv[])
             break;
         }
     }
+    printf("Waiting for workers to create their pipes\n");
+    sleep(2);
 
-    sleep(2);//This should change(Wait for workers to create their pipes)
-
+    //Get directories of Country folder
+    struct dirent *de;  //Pointer to directory entry
+    DIR *dr = opendir("./Countries");
+    if(dr ==NULL){
+        printf("Could not open the directory\n");
+    }
+    while((de = readdir(dr))!=NULL){
+        if((strcmp(de->d_name,".")!=0) && (strcmp(de->d_name,"..")!=0))
+            //add the directory name to a queue and increase the counter of the dirs
+            //to use later at hashtable creation.Insert dirs in the hashtable
+            printf("%s\n",de->d_name);
+    }
+    closedir(dr);
     //Send a request to all workers with the directories to handle
     char request[100];
     for(int i=0;i<3;i++){

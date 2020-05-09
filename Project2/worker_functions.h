@@ -10,8 +10,8 @@ struct request_queue_node
 };
 typedef struct request_queue_node queuenode;
 
-//Add request to the end of the queue
-void add_request(queuenode **qnode,char *r){
+//Add item to the end of the queue
+void add_item(queuenode **qnode,char *r){
     while (*qnode!=NULL)
     {
         qnode = &((*qnode)->next);
@@ -21,8 +21,8 @@ void add_request(queuenode **qnode,char *r){
     (*qnode)->next = NULL;
 }
 
-//Get request from the queue
-int get_request(queuenode **qnode,char *r){
+//Get item from the queue
+int get_item(queuenode **qnode,char *r){
     if((*qnode)==NULL){
         return 0;
     }
@@ -47,7 +47,7 @@ void print_queue(queuenode *qnode){
 void send_file_stats(char *server_fifo,queuenode *requests){
     File_Stats stats_data;
     char request[100];
-    while (get_request(&requests,request))  //Get the directories to handle
+    while (get_item(&requests,request))  //Get the directories to handle
     {
         printf("Directory to handle is %s\n",request);
         memset(request,0,100);
