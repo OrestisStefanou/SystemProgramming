@@ -1,3 +1,5 @@
+#ifndef PIPE_H_
+#define PIPE_H_
 #include<stdio.h>
 #include<stdlib.h>
 #include<unistd.h>
@@ -7,6 +9,7 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 #include"mydate.h"
+#include<signal.h>
 
 #define SERVER_FIFO_NAME "/tmp/serv_%d_fifo"
 #define CLIENT_FIFO_NAME "/tmp/cli_%d_fifo"
@@ -31,3 +34,5 @@ void File_Stats_Print(File_Stats *stats){
     printf("Patients between age 41-60:%d\n",stats->Age_counter[2]);
     printf("Patients between age 60+:%d\n",stats->Age_counter[3]);
 }
+
+#endif /* PIPE_H_ */

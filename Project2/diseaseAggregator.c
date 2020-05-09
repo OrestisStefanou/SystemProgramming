@@ -9,13 +9,13 @@ int main(int argc, char const *argv[])
     char client_fifo[256];
     char server_fifo[256];
     pid_t pid;
-    char *args[]={"./client",NULL};
+    char *args[]={"./worker",NULL};
     int ret;
     int fds[5];     //Array with the file descriptors of the open pipes(useless??)
     int pids[5];    //Array with the pids of the workers
 
     //Create 5 workers
-    for(int i=0;i<5;i++){
+    for(int i=0;i<3;i++){
         pid = fork();
         switch (pid)
         {
@@ -41,16 +41,16 @@ int main(int argc, char const *argv[])
 
     sleep(2);//This should change(Wait for workers to create their pipes)
 
-    //Send a request to all workers
+    //Send a request to all workers with the directories to handle
     char request[100];
-    strcpy(request,"Send me the stats\n");
-    for(int i=0;i<5;i++){
+    for(int i=0;i<3;i++){
         sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);
         client_fifo_fd = open(client_fifo,O_WRONLY);
         if (client_fifo_fd!=-1)
         {
+            strcpy(request,"Send me the stats\n");
             write(client_fifo_fd,request,sizeof(request));//Send the request
-            strcpy(request,"Send me the stats again\n");
+            strcpy(request,"China/15-02-2005\n");
             write(client_fifo_fd,request,sizeof(request));//Send the request
             close(client_fifo_fd);
             sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
@@ -59,12 +59,12 @@ int main(int argc, char const *argv[])
                 printf("Worker with pid %d sent:\n",pids[i]);
                 File_Stats_Print(&stats_data);
             }
+            close(fds[i]);
         }
         else
         {
             printf("Something went wrong with open(server)\n");
             for(int i=0;i<5;i++){
-                close(fds[i]);
                 sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
                 unlink(server_fifo);
             }
@@ -73,11 +73,12 @@ int main(int argc, char const *argv[])
         
     }
 
-    //Close file descriptors and delete the pipes
+    //Close file descriptors and delete the pipes,send interrupt signal to workers
     for(int i=0;i<5;i++){
         close(fds[i]);
         sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
         unlink(server_fifo);
+        kill(pids[i],SIGINT);
     }
     exit(EXIT_SUCCESS);
     return 0;
