@@ -3,6 +3,7 @@
 #include"Parent_Data_Structures.h"
 #include"mydate.h"
 #include"dirent.h"
+#include"patient.h" 
 
 int main(int argc, char const *argv[])
 {
@@ -46,5 +47,18 @@ int main(int argc, char const *argv[])
     }
     datelistPrint(datelist);
     closedir(dr);
+    FILE *fp = fopen("./Countries/China/01-01-2020","r");
+    if(fp==NULL){
+        printf("Error during opening the file\n");
+        exit(1);
+    }
+    printf("File opened\n");
+    char buf[100];
+    struct patient_record record;
+    while(fgets(buf,100,fp)!=NULL){
+        read_record(&record,buf);
+        print_record_info(&record);
+    }
+    fclose(fp);
     return 0;
 }
