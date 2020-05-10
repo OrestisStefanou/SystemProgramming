@@ -1,5 +1,7 @@
 #include"pipe.h"
+#include"worker_functions.h"
 #include<ctype.h>
+#include"Parent_Data_Structures.h"
 
 int main(int argc, char const *argv[])
 {
@@ -14,7 +16,9 @@ int main(int argc, char const *argv[])
     int fds[5];     //Array with the file descriptors of the open pipes(useless??)
     pid_t pids[5];    //Array with the pids of the workers
 
-    //Create 5 workers
+    int num_of_workers=atoi(argv[1]);   //Number of workers
+
+    //Create workers
     for(int i=0;i<3;i++){
         pid = fork();
         switch (pid)
@@ -43,17 +47,37 @@ int main(int argc, char const *argv[])
 
     //Get directories of Country folder
     struct dirent *de;  //Pointer to directory entry
+    int dir_counter=0;
+    queuenode *dir_queue=NULL;
     DIR *dr = opendir("./Countries");
     if(dr ==NULL){
         printf("Could not open the directory\n");
     }
     while((de = readdir(dr))!=NULL){
-        if((strcmp(de->d_name,".")!=0) && (strcmp(de->d_name,"..")!=0))
+        if((strcmp(de->d_name,".")!=0) && (strcmp(de->d_name,"..")!=0)){
             //add the directory name to a queue and increase the counter of the dirs
+            add_item(&dir_queue,de->d_name);
+            dir_counter++;
             //to use later at hashtable creation.Insert dirs in the hashtable
-            printf("%s\n",de->d_name);
+            //printf("%s\n",de->d_name);
+        }
     }
     closedir(dr);
+    //////////////////////////////////////
+
+    //Fill the Hashtable
+    Hashtable_init(dir_counter);
+    char dir_name[100];
+    while(get_item(&dir_queue,dir_name)){   //Get directories from the queue
+        Hashtable_insert(dir_name,0);   //Insert directory(country) to the hashtable
+    }
+    //
+
+    //Hashtable testing
+    //for(int i=0;i<hashtable_size;i++){
+    //    printf("Country:%s\n",Hashtable[i].country);
+    //}
+
     //Send a request to all workers with the directories to handle
     char request[100];
     for(int i=0;i<3;i++){
@@ -93,6 +117,7 @@ int main(int argc, char const *argv[])
         unlink(server_fifo);
         kill(pids[i],SIGINT);
     }
+    Hashtable_Free();
     exit(EXIT_SUCCESS);
     return 0;
 }

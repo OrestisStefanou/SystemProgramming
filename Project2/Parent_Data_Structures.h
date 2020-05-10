@@ -72,4 +72,10 @@ int getHashtable_index(char *c){
     return index;
 }
 
+void Hashtable_Free(){
+    //for(int i=0;i<hashtable_size;i++)
+        //free the trees root
+    free(Hashtable);
+}
+
 #endif /* PARENT_DATA_STRUCTURES_H_ */
