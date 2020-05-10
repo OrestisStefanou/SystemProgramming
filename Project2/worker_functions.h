@@ -49,8 +49,34 @@ void send_file_stats(char *server_fifo,queuenode *requests){
     char directory[100];
     get_item(&requests,directory);  //Get the directory to handle
     printf("Directory to handle is %s\n",directory);
-    
-    
+
+    //Read the directory and insert the files(dates) in the dateslist to sort them
+    struct dirent *de;//Pointer to directory entry
+    dateListptr dateList=NULL;
+    DIR *dr = opendir(directory);
+    if(dr==NULL){   //In case of error update the parent and abort
+        printf("Could not open the directory\n");
+        int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+        if (server_fifo_fd==-1)
+        {
+            fprintf(stderr,"No server\n");
+            exit(EXIT_FAILURE);
+        }
+        //Send the stats(empty stats)
+        write(server_fifo_fd, &stats_data, sizeof(stats_data));
+        close(server_fifo_fd);
+        return;
+    }
+    while((de=readdir(dr))!=NULL){
+        if((strcmp(de->d_name,".")!=0) && (strcmp(de->d_name,"..")!=0)){
+            date_list_insert(&dateList,de->d_name);     //Insert the filename(date) in the list
+        }
+    }
+    printf("Files in sorted order are:\n");
+    datelistPrint(dateList);   
+    closedir(dr);
+    //////////////////////////////////////////////
+
     //TESTING DATA
     set_date(&stats_data.file_date,1,1,2005);
     strcpy(stats_data.Country,directory);
