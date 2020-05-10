@@ -5,14 +5,14 @@
 
 int main(int argc, char const *argv[])
 {
-    int server_fifo_fd,client_fifo_fd;
+    int server_fifo_fd,client_fifo_fd;  //File descriptors of server and client pipes
     File_Stats stats_data;
-    int read_res;
-    char client_fifo[256];
-    char server_fifo[256];
-    pid_t pid;
-    char *args[]={"./worker",NULL};
-    int ret;
+    int read_res;           //For error checking
+    char client_fifo[256];  //To save the client fifo name
+    char server_fifo[256];  //To save the server fifo name
+    pid_t pid;              //For fork()
+    char *args[]={"./worker",NULL}; //For exec()
+    int ret;                //For error checking
     int fds[5];     //Array with the file descriptors of the open pipes(useless??)
     pid_t pids[5];    //Array with the pids of the workers
 
@@ -49,7 +49,7 @@ int main(int argc, char const *argv[])
     struct dirent *de;  //Pointer to directory entry
     int dir_counter=0;
     queuenode *dir_queue=NULL;
-    DIR *dr = opendir("./Countries");
+    DIR *dr = opendir("./Countries");   //Here it is going to be the folder name given in cmdline arguments
     if(dr ==NULL){
         printf("Could not open the directory\n");
     }
@@ -80,38 +80,57 @@ int main(int argc, char const *argv[])
 
     //Send a request to all workers with the directories to handle
     char request[100];
-    for(int i=0;i<3;i++){
-        sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);
-        client_fifo_fd = open(client_fifo,O_WRONLY);
-        if (client_fifo_fd!=-1)
-        {
-            strcpy(request,"Send me the stats\n");
-            write(client_fifo_fd,request,sizeof(request));//Send the request
-            strcpy(request,"China/15-02-2005\n");
-            write(client_fifo_fd,request,sizeof(request));//Send the request
-            close(client_fifo_fd);
-            sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
-            fds[i] = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
-            while(read_res = read(fds[i],&stats_data,sizeof(stats_data))>0){//Get the response
-                printf("Worker with pid %d sent:\n",pids[i]);
-                File_Stats_Print(&stats_data);
-            }
-            close(fds[i]);
-        }
-        else
-        {
-            printf("Something went wrong with open(server)\n");
-            for(int i=0;i<5;i++){
+    dir_counter=0;
+    while(dir_counter<hashtable_size){  //Loop until we send all directories
+        for(int i=0;i<3;i++){
+            sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);
+            client_fifo_fd = open(client_fifo,O_WRONLY);
+            if (client_fifo_fd!=-1)
+            {
+                strcpy(request,"Send me the stats\n");
+                write(client_fifo_fd,request,sizeof(request));//Send the request
+                //strcpy(dir_name,Hashtable[dir_counter].country);
+                sprintf(dir_name,"%s/%s","./Countries",Hashtable[dir_counter].country);//Create the directory to send the worker
+                write(client_fifo_fd,dir_name,sizeof(request));//Send the directory name
+                close(client_fifo_fd);
                 sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
-                unlink(server_fifo);
+                fds[i] = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                while(read_res = read(fds[i],&stats_data,sizeof(stats_data))>0){//Get the response
+                    printf("Worker with pid %d sent:\n",pids[i]);
+                    File_Stats_Print(&stats_data);
+                }
+                close(fds[i]);
+                Hashtable[dir_counter].worker_pid=pids[i];  //Save the worker's pid in the hashtable
             }
-            exit(EXIT_SUCCESS);
+            else    //Something went wrong
+            {
+                printf("Something went wrong with open(server)\n");
+                for(int i=0;i<3;i++){
+                    sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
+                    unlink(server_fifo);
+                    kill(pids[i],SIGINT);
+                }
+                Hashtable_Free();
+                exit(EXIT_SUCCESS);
+            }
+            memset(request,0,100);
+            memset(dir_name,0,100);
+            dir_counter++;
+            if (dir_counter>=hashtable_size)
+            {
+                break;
+            }
+            
         }
-        
     }
 
+    //Hashtable testing
+    //for(int i=0;i<hashtable_size;i++){
+    //    printf("Country:%s and pid of worker:%d\n",Hashtable[i].country,Hashtable[i].worker_pid);
+    //}
+
     //Close file descriptors and delete the pipes,send interrupt signal to workers
-    for(int i=0;i<5;i++){
+    for(int i=0;i<3;i++){
         close(fds[i]);
         sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
         unlink(server_fifo);

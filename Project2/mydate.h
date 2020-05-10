@@ -12,8 +12,37 @@ struct myDate{
 
 typedef struct myDate Date;
 
-void get_date(Date *date_in_int,char *date_in_char){//Converts date to myDate struct 
-    //maybe useless
+Date get_date(char *date_in_char){//Converts string date to myDate struct 
+    Date date_in_int;
+    int i=0;
+    int j=0;
+    char temp[5];
+    //Get day
+    while(date_in_char[i]!='-'){
+        temp[j]=date_in_char[i];
+        i++;
+        j++;
+    }
+    date_in_int.day=atoi(temp);
+    //Get month
+    j=0;
+    i++;
+    while(date_in_char[i]!='-'){
+        temp[j]=date_in_char[i];
+        i++;
+        j++;
+    }
+    date_in_int.month=atoi(temp);
+    //Get year
+    j=0;
+    i++;
+    while(date_in_char[i]!='\0'){
+        temp[j]=date_in_char[i];
+        i++;
+        j++;
+    }
+    date_in_int.year=atoi(temp);
+    return date_in_int;    
 }
 
 void set_date(Date *date_to_set,int d,int m,int y){//FILL Date structure
@@ -22,7 +51,7 @@ void set_date(Date *date_to_set,int d,int m,int y){//FILL Date structure
     date_to_set->year=y;
 }
 
-int check_dates(Date date1,Date date2){//Date11->Entry date,Date2->exit date
+int check_dates(Date date1,Date date2){//Date1->Entry date,Date2->exit date
     //if date1 is smaller than date 2 return 0,else return 1
     if(date1.year>date2.year){
         return 1;
@@ -46,6 +75,63 @@ void print_date(Date *date_to_print){
         return;
     }
     printf("%d-%d-%d\n",date_to_print->day,date_to_print->month,date_to_print->year);
+}
+
+//////////DATA STRUCTURE TO SORT DATES//////////////////////
+struct date_list_node
+{
+    char stringDate[15];
+    Date numericDate;
+    struct date_list_node *next;
+    struct date_list_node *prev;
+};
+typedef struct date_list_node *dateListptr;
+
+//Insert a date in the right position in the list 
+void date_list_insert(dateListptr *ptraddr,char *filedate){
+    dateListptr temp_ptr;
+    Date newDate = get_date(filedate);
+    while((*ptraddr)!=NULL){
+        if(check_dates(newDate,(*ptraddr)->numericDate)){
+            temp_ptr=*ptraddr;
+            ptraddr=&((*ptraddr)->next);
+        }
+        else
+        {   
+            temp_ptr = *ptraddr;
+            *ptraddr = malloc(sizeof(struct date_list_node));
+            (*ptraddr)->numericDate = newDate;
+            strcpy((*ptraddr)->stringDate,filedate);
+            (*ptraddr)->next=temp_ptr;
+            (*ptraddr)->prev = temp_ptr->prev;
+            temp_ptr->prev->next = *ptraddr;
+            temp_ptr->prev = *ptraddr;
+            return;
+        }
+        
+    }
+    //We reached the end of the list
+    *ptraddr = malloc(sizeof(struct date_list_node));
+    (*ptraddr)->numericDate=newDate;
+    strcpy((*ptraddr)->stringDate,filedate);
+    (*ptraddr)->next=NULL;
+    if(temp_ptr!=NULL){
+        temp_ptr->next=*ptraddr;
+        (*ptraddr)->prev=temp_ptr;
+    }
+    else    //First node of the list
+    {
+        (*ptraddr)->prev=NULL;
+    }
+    
+}
+
+void datelistPrint(dateListptr listptr){
+    dateListptr temp = listptr;
+    while(temp!=NULL){
+        printf("%s\n",temp->stringDate);
+        temp=temp->next;
+    }
 }
 
 #endif /* MYDATE_H_ */

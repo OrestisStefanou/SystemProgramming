@@ -27,25 +27,26 @@ int main(int argc, char const *argv[])
         fprintf(stderr,"Error during mkfifo from client\n");
         exit(EXIT_FAILURE);
     }
-    
+    //Main loop
     while(1){
         client_fifo_fd = open(client_fifo, O_RDONLY);//Wait for server to open it and to send a request
         if (client_fifo_fd!=-1)
         {   //Read request from the server
             while(read(client_fifo_fd,request,sizeof(request))>0){
                 //printf("Server request is %s",request);
-                add_item(&request_queue,request);
+                add_item(&request_queue,request);   //Add the request to the queue
                 memset(request,0,100);  //Empty the buffer to read next request
             }
             close(client_fifo_fd);
         }
-        else
+        else    //Error
         {
             printf("Something went wrong with open(client)\n");
             unlink(client_fifo);
             exit(EXIT_FAILURE);
         }
-        get_item(&request_queue,request);
+
+        get_item(&request_queue,request);   //Get request from the queue
         if(strcmp(request,"Send me the stats\n")==0){
             send_file_stats(server_fifo,request_queue);//request_queue has the name of the folders to handle
         }

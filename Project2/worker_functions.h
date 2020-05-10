@@ -46,16 +46,14 @@ void print_queue(queuenode *qnode){
 //Send file statistics to the server
 void send_file_stats(char *server_fifo,queuenode *requests){
     File_Stats stats_data;
-    char request[100];
-    while (get_item(&requests,request))  //Get the directories to handle
-    {
-        printf("Directory to handle is %s\n",request);
-        memset(request,0,100);
-    }
+    char directory[100];
+    get_item(&requests,directory);  //Get the directory to handle
+    printf("Directory to handle is %s\n",directory);
+    
     
     //TESTING DATA
     set_date(&stats_data.file_date,1,1,2005);
-    strcpy(stats_data.Country,"Cyprus");
+    strcpy(stats_data.Country,directory);
     strcpy(stats_data.Disease,"Malazavragka");
     for(int i=0;i<4;i++)
         stats_data.Age_counter[i]=getpid();
@@ -66,11 +64,9 @@ void send_file_stats(char *server_fifo,queuenode *requests){
         fprintf(stderr,"No server\n");
         exit(EXIT_FAILURE);
     }
-    write(server_fifo_fd, &stats_data, sizeof(stats_data));
-    strcpy(stats_data.Country,"Greece");
+    //Send the stats
     write(server_fifo_fd, &stats_data, sizeof(stats_data));
     close(server_fifo_fd);
-    printf("Finished with this\n");
     return;
 }
 
