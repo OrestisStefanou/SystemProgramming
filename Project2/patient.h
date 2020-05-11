@@ -3,6 +3,7 @@
 #include<string.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include"mydate.h"
 
 struct patient_record
 {
@@ -12,6 +13,7 @@ struct patient_record
     char status[10];
     char disease[25];
     int age;
+    Date filedate;
 };
 
 void print_record_info(struct patient_record *record){
@@ -22,6 +24,8 @@ void print_record_info(struct patient_record *record){
     printf("DiseaseID:%s\n",record->disease);
     printf("Status:%s\n",record->status);
     printf("Age:%d\n",record->age);
+    printf("Date:");
+    print_date(&record->filedate);
     printf("-------------------------\n");
 }
 
