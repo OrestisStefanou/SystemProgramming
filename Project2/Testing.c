@@ -36,5 +36,19 @@ int main(int argc, char const *argv[])
     fclose(fp);
     RecordTreeptr root = getDiseaseHTvalue(table,"H1N1",10);
     RecordTreenode_print(root);
+
+    DIR *dr = opendir("./Countries/China");
+    struct dirent *de;//Pointer to directory entry
+    dateListptr dateList=NULL;
+    if(dr==NULL){
+        exit(EXIT_FAILURE);
+    }
+    while((de=readdir(dr))!=NULL){
+        if(de->d_name[0]!='.'){
+            date_list_insert(&dateList,de->d_name);     //Insert the filename(date) in the list
+        }
+    }
+    datelistPrint(dateList);
+    closedir(dr);
     return 0;
 }

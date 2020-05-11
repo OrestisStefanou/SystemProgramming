@@ -54,7 +54,7 @@ int main(int argc, char const *argv[])
         printf("Could not open the directory\n");
     }
     while((de = readdir(dr))!=NULL){
-        if((strcmp(de->d_name,".")!=0) && (strcmp(de->d_name,"..")!=0)){
+        if(de->d_name[0]!='.'){
             //add the directory name to a queue and increase the counter of the dirs
             add_item(&dir_queue,de->d_name);
             dir_counter++;

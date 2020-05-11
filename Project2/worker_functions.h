@@ -68,12 +68,15 @@ void send_file_stats(char *server_fifo,queuenode *requests){
         return;
     }
     while((de=readdir(dr))!=NULL){
-        if((strcmp(de->d_name,".")!=0) && (strcmp(de->d_name,"..")!=0)){
+        if(de->d_name[0]!='.'){
             date_list_insert(&dateList,de->d_name);     //Insert the filename(date) in the list
         }
     }
     printf("Files in sorted order are:\n");
-    datelistPrint(dateList);   
+    datelistPrint(dateList);
+    
+    //1.Get each filename to read
+    //2.Get country name for stats struct   
     closedir(dr);
     //////////////////////////////////////////////
 
