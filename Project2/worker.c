@@ -11,6 +11,7 @@ void terminate(int sig){
     printf("Got the interrupt signal and exiting\n");
     unlink(client_fifo);
     (void) signal(SIGINT, SIG_DFL);
+    //FREE THE MEMORY
     exit(EXIT_SUCCESS);
 }
 
@@ -38,16 +39,13 @@ int main(int argc, char const *argv[])
     while(1){
         request_queue=NULL;
         client_fifo_fd = open(client_fifo, O_RDONLY);//Wait for server to open it and to send a request
-        printf("Client opened client pipe\n");
         if (client_fifo_fd!=-1)
         {   //Read request from the server
-            printf("Client trying to read the request\n");
             while(read(client_fifo_fd,request,sizeof(request))>0){
-                printf("Server request is %s",request);
+                //printf("Server request is %s",request);
                 add_item(&request_queue,request);   //Add the request to the queue
                 memset(request,0,100);  //Empty the buffer to read next request
             }
-            printf("Coming here\n");
             close(client_fifo_fd);
         }
         else    //Error
@@ -58,7 +56,7 @@ int main(int argc, char const *argv[])
         }
 
         get_item(&request_queue,request);   //Get request from the queue
-        printf("Request is %s\n",request);
+        //printf("Request is %s\n",request);
         if(strcmp(request,"Send me the stats\n")==0){
             send_file_stats(server_fifo,request_queue,&myData);//request_queue has the name of the folders to handle
         }

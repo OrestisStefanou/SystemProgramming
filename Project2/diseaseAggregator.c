@@ -79,13 +79,13 @@ int main(int argc, char const *argv[])
     //}
 
     //Send a request to all workers with the directories to handle
+    FileStatsTreePtr StatsTree = NULL;  //Pointer to the tree where we keep all the stats the workers send us
     char request[100];
     dir_counter=0;
     while(dir_counter<hashtable_size){  //Loop until we send all directories
         for(int i=0;i<3;i++){
             sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);
             client_fifo_fd = open(client_fifo,O_WRONLY);
-            printf("Server opened client pipe\n");
             if (client_fifo_fd!=-1)
             {
                 strcpy(request,"Send me the stats\n");
@@ -93,14 +93,11 @@ int main(int argc, char const *argv[])
                 //strcpy(dir_name,Hashtable[dir_counter].country);
                 sprintf(dir_name,"%s/%s","./Countries",Hashtable[dir_counter].country);//Create the directory to send the worker
                 write(client_fifo_fd,dir_name,sizeof(request));//Send the directory name
-                printf("Server sent the request and the dir\n");
                 close(client_fifo_fd);
                 sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
                 fds[i] = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
-                printf("Server opened server pipe\n");
-                while(read_res = read(fds[i],&stats_data,sizeof(stats_data))>0){//Get the response
-                    printf("Worker with pid %d sent:\n",pids[i]);
-                    File_Stats_Print(&stats_data);
+                while(read_res = read(fds[i],&stats_data,sizeof(stats_data))>0){//Get the stats from the worker
+                    StatsTree = add_FileStatsTree_node(StatsTree,stats_data);   //Insert them in the tree
                 }
                 close(fds[i]);
                 Hashtable[dir_counter].worker_pid=pids[i];  //Save the worker's pid in the hashtable
@@ -126,7 +123,8 @@ int main(int argc, char const *argv[])
             
         }
     }
-
+    printf("The stats are:\n");
+    FileStatsTreePrint(StatsTree);
     //Hashtable testing
     //for(int i=0;i<hashtable_size;i++){
     //    printf("Country:%s and pid of worker:%d\n",Hashtable[i].country,Hashtable[i].worker_pid);

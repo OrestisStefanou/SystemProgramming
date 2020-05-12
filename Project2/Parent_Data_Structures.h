@@ -32,6 +32,22 @@ FileStatsTreePtr add_FileStatsTree_node(FileStatsTreePtr p,struct File_Statistic
     return p;
 }
 
+void FileStatsTreePrint(FileStatsTreePtr p){
+    if(p!=NULL){
+        File_Stats_Print(&p->fileStats);
+        FileStatsTreePrint(p->left);
+        FileStatsTreePrint(p->right);
+    }
+}
+
+void freeFileStatsTree(FileStatsTreePtr p){
+    if(p==NULL){
+        return;
+    }
+    freeFileStatsTree(p->left);
+    freeFileStatsTree(p->right);
+    free(p);
+}
 //////////////////////////////////
 //Hash table data structure
 struct Hashtable_entry

@@ -72,9 +72,9 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
     char path[100];
     char country_name[25];
     get_item(&requests,directory);  //Get the directory to handle
-    printf("Directory to handle is %s\n",directory);
+    //printf("Directory to handle is %s\n",directory);
     getCountryFromDir(directory,country_name);
-    printf("Country name is %s\n",country_name);
+    //printf("Country name is %s\n",country_name);
     //Read the directory and insert the files(dates) in the dateslist to sort them
     struct dirent *de;//Pointer to directory entry
     dateListptr dateList=NULL;
@@ -106,7 +106,6 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
         fprintf(stderr,"No server\n");
         exit(EXIT_FAILURE);
     }
-    printf("Client opened server pipe\n");
 
     //OPEN THE FILES OF THE DIRECTORY FILL THE DATA STRUCTURES AND CREATE THE STATS TO SEND
     FILE *fp;   //for fopen
@@ -121,7 +120,7 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
         strcat(path,"/");
         strcat(path,dates.stringDate); //Create the path to open the file
         myData->Filenames=add_filetree_node(myData->Filenames,path);    //Add the path to visited Filenames
-        printf("File to open is %s\n",path);
+        //printf("File to open is %s\n",path);
         fp = fopen(path,"r");
         if(fp==NULL){
             printf("Error during opening file\n");
