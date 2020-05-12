@@ -23,6 +23,7 @@ int main(int argc, char const *argv[])
         DiseaseHashTableInsert(table,record,10);
     }
     fclose(fp);
+    statsListPtr stats = NULL;
     fp = fopen("./Countries/England/10-01-2020","r");
     if(fp==NULL){
         printf("Error during opening the file\n");
@@ -32,8 +33,13 @@ int main(int argc, char const *argv[])
         record=malloc(sizeof(struct patient_record));
         read_record(record,buf);
         DiseaseHashTableInsert(table,record,10);
+        statsListUpdate(&stats,record,"England");
     }
     fclose(fp);
+    File_Stats stats_to_send;
+    while(statsListPop(&stats,&stats_to_send)){
+        File_Stats_Print(&stats_to_send);
+    }
     RecordTreeptr root = getDiseaseHTvalue(table,"H1N1",10);
     RecordTreenode_print(root);
 

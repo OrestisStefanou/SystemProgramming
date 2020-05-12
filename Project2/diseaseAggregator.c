@@ -85,6 +85,7 @@ int main(int argc, char const *argv[])
         for(int i=0;i<3;i++){
             sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);
             client_fifo_fd = open(client_fifo,O_WRONLY);
+            printf("Server opened client pipe\n");
             if (client_fifo_fd!=-1)
             {
                 strcpy(request,"Send me the stats\n");
@@ -92,9 +93,11 @@ int main(int argc, char const *argv[])
                 //strcpy(dir_name,Hashtable[dir_counter].country);
                 sprintf(dir_name,"%s/%s","./Countries",Hashtable[dir_counter].country);//Create the directory to send the worker
                 write(client_fifo_fd,dir_name,sizeof(request));//Send the directory name
+                printf("Server sent the request and the dir\n");
                 close(client_fifo_fd);
                 sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
                 fds[i] = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                printf("Server opened server pipe\n");
                 while(read_res = read(fds[i],&stats_data,sizeof(stats_data))>0){//Get the response
                     printf("Worker with pid %d sent:\n",pids[i]);
                     File_Stats_Print(&stats_data);

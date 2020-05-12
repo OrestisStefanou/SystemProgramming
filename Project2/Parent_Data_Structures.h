@@ -2,6 +2,38 @@
 #define PARENT_DATA_STRUCTURES_H_
 #include"pipe.h"
 
+//StatsTree
+struct FileStatsTreeNode{
+    struct File_Statistics fileStats;
+    struct FileStatsTreeNode *right;
+    struct FileStatsTreeNode *left;
+};
+typedef struct FileStatsTreeNode *FileStatsTreePtr;
+
+//Insert FileStats in the tree(Sorted by date)
+FileStatsTreePtr add_FileStatsTree_node(FileStatsTreePtr p,struct File_Statistics fStats){
+    if(p==NULL){//Tree is empty
+        p = malloc(sizeof(struct FileStatsTreeNode));
+        p->fileStats.file_date=fStats.file_date;
+        strcpy(p->fileStats.Country,fStats.Country);
+        strcpy(p->fileStats.Disease,fStats.Disease);
+        for(int i=0;i<4;i++){
+            p->fileStats.Age_counter[i]=fStats.Age_counter[i];
+        }
+        p->left=NULL;
+        p->right=NULL;
+    }
+    else if(check_dates(fStats.file_date,p->fileStats.file_date)){
+        p->right=add_FileStatsTree_node(p->right,fStats);
+    }
+    else if(check_dates(fStats.file_date,p->fileStats.file_date)==0){
+        p->left=add_FileStatsTree_node(p->left,fStats);
+    }
+    return p;
+}
+
+//////////////////////////////////
+//Hash table data structure
 struct Hashtable_entry
 {
     char country[30];

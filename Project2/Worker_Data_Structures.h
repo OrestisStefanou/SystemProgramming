@@ -224,5 +224,91 @@ RecordTreeptr getDiseaseHTvalue(DiseaseHT table,char *c,int size){
     }
     return NULL;
 }
+///////////////////////////////////////////////////////////////////
 
+//List to keep statistics
+struct statsListNode{
+    File_Stats stats;
+    struct statsListNode *next;
+};
+typedef struct statsListNode *statsListPtr;
+
+//Update statistics
+void statsListUpdate(statsListPtr *ptraddr,struct patient_record *record,char *c){
+    //Search if a stat structure for that disease already exists
+    while(*ptraddr!=NULL){
+        if(strcmp((*ptraddr)->stats.Disease,record->disease)==0){
+            //Stats for this disease exists so we just updated it
+            if(record->age<=20){
+                (*ptraddr)->stats.Age_counter[0]++;
+            }
+            else if(record->age>20 && record->age<=40){
+                (*ptraddr)->stats.Age_counter[1]++;
+            }
+            else if(record->age>40 && record->age<=60){
+                (*ptraddr)->stats.Age_counter[2]++;
+            }
+            else{
+                (*ptraddr)->stats.Age_counter[3]++;
+            }
+            return;
+        }
+        ptraddr = &((*ptraddr)->next);
+    }
+    //If we come here there is no stat for this disease so we create one
+    *ptraddr=malloc(sizeof(struct statsListNode));
+    //Initialize the stats
+    strcpy((*ptraddr)->stats.Country,c);
+    strcpy((*ptraddr)->stats.Disease,record->disease);
+    (*ptraddr)->stats.file_date = record->filedate;
+    (*ptraddr)->next=NULL;
+    for(int i=0;i<4;i++){
+        (*ptraddr)->stats.Age_counter[i]=0;
+    }
+    ///
+    //Update the stats
+    if(record->age<=20){
+        (*ptraddr)->stats.Age_counter[0]++;
+    }
+    else if(record->age>20 && record->age<=40){
+        (*ptraddr)->stats.Age_counter[1]++;
+    }
+    else if(record->age>40 && record->age<=60){
+        (*ptraddr)->stats.Age_counter[2]++;
+    }
+    else{
+        (*ptraddr)->stats.Age_counter[3]++;
+    }
+}
+
+//Remove the first stat from the statList
+//But first copy it to stats variable
+int statsListPop(statsListPtr *ptraddr,File_Stats *stats){
+    if((*ptraddr)==NULL){
+        return 0;
+    }
+    statsListPtr temp = *ptraddr;//Save the address of the node
+    //Copy the values
+    strcpy(stats->Country,(*ptraddr)->stats.Country);
+    strcpy(stats->Disease,(*ptraddr)->stats.Disease);
+    stats->file_date= (*ptraddr)->stats.file_date;
+    for(int i=0;i<4;i++){
+        stats->Age_counter[i]=(*ptraddr)->stats.Age_counter[i];
+    }
+    ///////////////////////////////////////////////////////
+    *ptraddr = (*ptraddr)->next;        //get new head of the queue
+    free(temp);                 //free the old head of the queue
+    return 1;
+}
+
+//////////////////////////////////////
+
+//A structure that keeps all the pointers the worker needs to keep
+struct WorkersDataStructs{
+    RecordTreeptr InPatients;   //Binary tree to keep "ENTER" Patients
+    RecordTreeptr OutPatients;  //Binary tree to keep "EXIT" Patients
+    FileTreeptr Filenames;  //Binary tree to keep the files we have read
+    DiseaseHT DiseaseHashTable; //it will help for the queries
+    int hashtablesize;
+};
 #endif /* WORKER_DATA_STRUCTURES_H_ */

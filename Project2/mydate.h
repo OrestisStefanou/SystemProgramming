@@ -126,6 +126,19 @@ void date_list_insert(dateListptr *ptraddr,char *filedate){
     
 }
 
+//Get item from Datelist
+int dateListPop(dateListptr *ptraddr,dateListptr returnDate){
+    if((*ptraddr)==NULL){
+        return 0;
+    }
+    dateListptr temp = *ptraddr;//Save the address of the node
+    strcpy(returnDate->stringDate,(*ptraddr)->stringDate);
+    returnDate->numericDate = (*ptraddr)->numericDate;
+    *ptraddr = (*ptraddr)->next;        //get new head of the queue
+    free(temp);                 //free the old head of the queue
+    return 1;
+}
+
 void datelistPrint(dateListptr listptr){
     dateListptr temp = listptr;
     while(temp!=NULL){

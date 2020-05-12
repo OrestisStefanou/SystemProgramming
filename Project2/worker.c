@@ -5,6 +5,7 @@
 char client_fifo[256];  //Client fifo pipe name
 char server_fifo[256];  //Server fifo pipe name
 queuenode *request_queue = NULL;    //queue of requests from the server
+struct WorkersDataStructs myData;   //Here we will have all the data structures we need
 
 void terminate(int sig){
     printf("Got the interrupt signal and exiting\n");
@@ -19,7 +20,13 @@ int main(int argc, char const *argv[])
     printf("Worker %d running\n",getpid());
     int server_fifo_fd,client_fifo_fd;
     char request[100];
-
+    //INITIALIZE DATA STRUCTURES
+    myData.Filenames=NULL;
+    myData.InPatients=NULL;
+    myData.OutPatients=NULL;
+    myData.DiseaseHashTable = create_DiseaseHashtable(15);
+    myData.hashtablesize=15;
+    //////////////////////////////////////////////
     sprintf(server_fifo,SERVER_FIFO_NAME,getpid()); //Create server pipe name
     sprintf(client_fifo,CLIENT_FIFO_NAME,getpid());//Create pipe to read from the server
     if (mkfifo(client_fifo,0777)==-1)
@@ -29,14 +36,18 @@ int main(int argc, char const *argv[])
     }
     //Main loop
     while(1){
+        request_queue=NULL;
         client_fifo_fd = open(client_fifo, O_RDONLY);//Wait for server to open it and to send a request
+        printf("Client opened client pipe\n");
         if (client_fifo_fd!=-1)
         {   //Read request from the server
+            printf("Client trying to read the request\n");
             while(read(client_fifo_fd,request,sizeof(request))>0){
-                //printf("Server request is %s",request);
+                printf("Server request is %s",request);
                 add_item(&request_queue,request);   //Add the request to the queue
                 memset(request,0,100);  //Empty the buffer to read next request
             }
+            printf("Coming here\n");
             close(client_fifo_fd);
         }
         else    //Error
@@ -47,8 +58,9 @@ int main(int argc, char const *argv[])
         }
 
         get_item(&request_queue,request);   //Get request from the queue
+        printf("Request is %s\n",request);
         if(strcmp(request,"Send me the stats\n")==0){
-            send_file_stats(server_fifo,request_queue);//request_queue has the name of the folders to handle
+            send_file_stats(server_fifo,request_queue,&myData);//request_queue has the name of the folders to handle
         }
     }
     unlink(client_fifo);
