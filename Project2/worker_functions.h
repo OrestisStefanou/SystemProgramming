@@ -2,7 +2,7 @@
 #define WORKER_FUNCTIONS_H_
 #include"pipe.h"
 #include"Worker_Data_Structures.h"
-
+#include"request.h"
 
 //A queue with the requests from the server
 struct request_queue_node
@@ -160,6 +160,20 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
     closedir(dr);
     close(server_fifo_fd);
     return;
+}
+
+void sendDiseaseFrequencyResult(char *server_fifo,queuenode *requests,struct WorkersDataStructs *myData){
+    struct dfData info;
+    char request[100];
+    get_item(&requests,request);
+    fill_dfData(request,&info);
+    printf("Virus name is %s\n",info.virusName);
+    printf("Country is %s\n",info.country);
+    int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+    //Just send 1 for testing purposes
+    int result=1;
+    write(server_fifo_fd,&result,sizeof(result));
+    close(server_fifo_fd);   
 }
 
 #endif /* WORKER_FUNCTIONS_H_ */

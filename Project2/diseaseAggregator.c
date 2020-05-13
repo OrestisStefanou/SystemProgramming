@@ -145,30 +145,44 @@ int main(int argc, char const *argv[])
 
         if(request_code==2){
             struct dfData info;
-            fill_dfData(request,&info);
-            printf("Virus name is %s\n",info.virusName);
-            printf("Country is %s\n",info.country);
-            printf("Entry date:");
-            print_date(&info.entry_date);
-            printf("Exit date:");
-            print_date(&info.exit_date);
-            //Testing
-            for(int i=0;i<3;i++){
-                strcpy(request,"testing");
-                sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);
-                client_fifo_fd = open(client_fifo,O_WRONLY);
-                if(client_fifo_fd==-1){
-                    printf("Error during opening client pipe\n");
-                    continue;
-                }
-                write(client_fifo_fd,request,sizeof(request));
-                close(client_fifo_fd);
-                memset(request,0,100);
-                sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
-                fds[i] = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
-                close(fds[i]);                
+            int result; //To read from the worker
+            int sum;    //Final result
+            int error = fill_dfData(user_request,&info);//Get the info of the request
+            if(error==-1){
+                printf("Wrong usage\n");
+                continue;
             }
-            continue;
+            //compare dates
+            if(check_dates(info.entry_date,info.exit_date)){
+                printf("Wrong dates given\n");
+                continue;
+            }
+            //If country not given send the request info to all the workers
+            if(info.country[0]==0){
+                for(int i=0;i<hashtable_size;i++){
+                    strcpy(request,"/diseaseFrequency");    //Request to send the worker
+                    sprintf(client_fifo,CLIENT_FIFO_NAME,Hashtable[i].worker_pid);  //Create the client pipe name
+                    client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
+                    if(client_fifo_fd==-1){
+                        printf("Error during opening client pipe\n");
+                        continue;
+                    }
+                    write(client_fifo_fd,request,sizeof(request));  //Send the request
+                    write(client_fifo_fd,user_request,sizeof(user_request));   //Send the user request
+                    close(client_fifo_fd);
+                    memset(request,0,100);
+                    sprintf(server_fifo,SERVER_FIFO_NAME,Hashtable[i].worker_pid);  //Create parent pipe name
+                    server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                    if(server_fifo_fd==-1){
+                        printf("Error during opening server pipe\n");
+                        continue;
+                    }
+                    read(server_fifo_fd,&result,sizeof(int));
+                    sum = sum + result;
+                    close(server_fifo_fd);
+                }
+                printf("Final result is %d\n",sum);
+            }
         }
 
         if(request_code==7){//exit
