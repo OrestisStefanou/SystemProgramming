@@ -3,6 +3,7 @@
 #include<ctype.h>
 #include"Parent_Data_Structures.h"
 #include"parent_functions.h"
+#include"request.h"
 
 int main(int argc, char const *argv[])
 {
@@ -143,6 +144,14 @@ int main(int argc, char const *argv[])
         }
 
         if(request_code==2){
+            struct dfData info;
+            fill_dfData(request,&info);
+            printf("Virus name is %s\n",info.virusName);
+            printf("Country is %s\n",info.country);
+            printf("Entry date:");
+            print_date(&info.entry_date);
+            printf("Exit date:");
+            print_date(&info.exit_date);
             //Testing
             for(int i=0;i<3;i++){
                 strcpy(request,"testing");
