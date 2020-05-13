@@ -124,12 +124,9 @@ int main(int argc, char const *argv[])
             
         }
     }
-    printf("The stats are:\n");
-    FileStatsTreePrint(StatsTree);
-    //Hashtable testing
-    //for(int i=0;i<hashtable_size;i++){
-    //    printf("Country:%s and pid of worker:%d\n",Hashtable[i].country,Hashtable[i].worker_pid);
-    //}
+
+    //printf("The stats are:\n");
+    //FileStatsTreePrint(StatsTree);
 
     //Get user's input
     char user_request[100];
@@ -137,9 +134,38 @@ int main(int argc, char const *argv[])
     while(1){
         fgets(user_request,100,stdin);
         request_code = get_request_code(user_request);
-        if(request_code==7){
+
+        if(request_code==1){
+            for(int i=0;i<hashtable_size;i++){
+                printf("Country:%s,pid of worker:%d\n",Hashtable[i].country,Hashtable[i].worker_pid);
+            }
+            continue;
+        }
+
+        if(request_code==2){
+            //Testing
+            for(int i=0;i<3;i++){
+                strcpy(request,"testing");
+                sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);
+                client_fifo_fd = open(client_fifo,O_WRONLY);
+                if(client_fifo_fd==-1){
+                    printf("Error during opening client pipe\n");
+                    continue;
+                }
+                write(client_fifo_fd,request,sizeof(request));
+                close(client_fifo_fd);
+                memset(request,0,100);
+                sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
+                fds[i] = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                close(fds[i]);                
+            }
+            continue;
+        }
+
+        if(request_code==7){//exit
             break;
         }
+
         if(request_code==-1){
             printf("Invalid request\n");
             continue;

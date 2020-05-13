@@ -12,6 +12,7 @@ struct patient_record
     char surname[25];
     char status[10];
     char disease[25];
+    char country[25];
     int age;
     Date filedate;
 };
@@ -22,6 +23,7 @@ void print_record_info(struct patient_record *record){
     printf("FirstName:%s\n",record->name);
     printf("LastName:%s\n",record->surname);
     printf("DiseaseID:%s\n",record->disease);
+    printf("Country:%s\n",record->country);
     printf("Status:%s\n",record->status);
     printf("Age:%d\n",record->age);
     printf("Date:");

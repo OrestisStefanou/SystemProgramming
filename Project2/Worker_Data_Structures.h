@@ -116,7 +116,7 @@ FileTreeptr add_filetree_node(FileTreeptr p,char *w){
 void FileTreenode_print(FileTreeptr p){
     if(p!=NULL){
         FileTreenode_print(p->left);
-        printf("Filename:%s ",p->filename);
+        printf("Filename:%s\n",p->filename);
         FileTreenode_print(p->right);
     }
 }

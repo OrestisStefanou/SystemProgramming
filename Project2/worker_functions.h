@@ -131,6 +131,7 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
             record=malloc(sizeof(struct patient_record));
             read_record(record,buf);    //Fill the patient record structure
             record->filedate=dates.numericDate; //Patient Record date is the name of the file
+            strcpy(record->country,country_name);   //Patient Country is the name of the folder
             if(strcmp(record->status,"EXIT")==0){
                 //Check for error
                 if(RecordTreesearch(myData->InPatients,record)==0){//Record not found in the "ENTER" patients tree
@@ -139,8 +140,9 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
                 }
                 //If not found insert it in the "EXIT" patients tree
                 myData->OutPatients=add_Recordtree_node(myData->OutPatients,record);
-                DiseaseHashTableInsert(myData->DiseaseHashTable,record,myData->hashtablesize);  //Update the hashtable
-                statsListUpdate(&filestats,record,country_name);    //Update the stats
+                //THINK IF YOU HAVE TO INSERT THEM IN THE HASHTABLE HERE
+                //DiseaseHashTableInsert(myData->DiseaseHashTable,record,myData->hashtablesize);  //Update the hashtable
+                //statsListUpdate(&filestats,record,country_name);    //Update the stats
             }else   //Patient has "ENTER" status
             {
                 myData->InPatients=add_Recordtree_node(myData->InPatients,record);//Insert the record in the "ENTER" patients tree

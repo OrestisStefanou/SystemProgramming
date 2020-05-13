@@ -61,6 +61,30 @@ int main(int argc, char const *argv[])
         if(strcmp(request,"Send me the stats\n")==0){
             send_file_stats(server_fifo,request_queue,&myData);//request_queue has the name of the folders to handle
         }
+        //Testing
+        if(strcmp(request,"testing")==0){
+            printf("I am worker with pid:%d\n",getpid());
+            printf("My directories are:\n");
+            DirListPrint(myData.directories);
+            printf("In Patients:\n");
+            RecordTreenode_print(myData.InPatients);
+            printf("Out Patients:\n");
+            RecordTreenode_print(myData.OutPatients);
+            printf("Filenames:\n");
+            FileTreenode_print(myData.Filenames);
+            for(int i=0;i<myData.hashtablesize;i++){
+                if(myData.DiseaseHashTable[i]!=NULL){
+                    struct DiseaseHashTableEntry *temp = myData.DiseaseHashTable[i];
+                    while(temp!=NULL){
+                        printf("Patients with disease %s\n",temp->diseaseID);
+                        RecordTreenode_print(temp->root);
+                        temp=temp->next;
+                    }
+                }
+            }
+            server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+            close(server_fifo_fd);
+        }
     }
     unlink(client_fifo);
     exit(EXIT_SUCCESS);
