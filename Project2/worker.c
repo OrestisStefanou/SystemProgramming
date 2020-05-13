@@ -27,6 +27,7 @@ int main(int argc, char const *argv[])
     myData.OutPatients=NULL;
     myData.DiseaseHashTable = create_DiseaseHashtable(15);
     myData.hashtablesize=15;
+    myData.directories=NULL;
     //////////////////////////////////////////////
     sprintf(server_fifo,SERVER_FIFO_NAME,getpid()); //Create server pipe name
     sprintf(client_fifo,CLIENT_FIFO_NAME,getpid());//Create pipe to read from the server

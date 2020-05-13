@@ -73,6 +73,7 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
     char country_name[25];
     get_item(&requests,directory);  //Get the directory to handle
     //printf("Directory to handle is %s\n",directory);
+    DirListInsert(&myData->directories,directory);  //Insert the directory in the worker's Dir list
     getCountryFromDir(directory,country_name);
     //printf("Country name is %s\n",country_name);
     //Read the directory and insert the files(dates) in the dateslist to sort them

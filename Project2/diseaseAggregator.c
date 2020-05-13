@@ -2,6 +2,7 @@
 #include"worker_functions.h"
 #include<ctype.h>
 #include"Parent_Data_Structures.h"
+#include"parent_functions.h"
 
 int main(int argc, char const *argv[])
 {
@@ -130,6 +131,21 @@ int main(int argc, char const *argv[])
     //    printf("Country:%s and pid of worker:%d\n",Hashtable[i].country,Hashtable[i].worker_pid);
     //}
 
+    //Get user's input
+    char user_request[100];
+    int request_code=0; //Each request will have a code
+    while(1){
+        fgets(user_request,100,stdin);
+        request_code = get_request_code(user_request);
+        if(request_code==7){
+            break;
+        }
+        if(request_code==-1){
+            printf("Invalid request\n");
+            continue;
+        }
+    }
+
     //Close file descriptors and delete the pipes,send interrupt signal to workers
     for(int i=0;i<3;i++){
         close(fds[i]);
@@ -138,6 +154,7 @@ int main(int argc, char const *argv[])
         kill(pids[i],SIGINT);
     }
     Hashtable_Free();
+    freeFileStatsTree(StatsTree);
     exit(EXIT_SUCCESS);
     return 0;
 }

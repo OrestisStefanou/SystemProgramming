@@ -303,6 +303,30 @@ int statsListPop(statsListPtr *ptraddr,File_Stats *stats){
 
 //////////////////////////////////////
 
+//Directory List
+struct DirListNode{
+    char CountryDir[100];
+    struct DirListNode *next;
+};
+typedef struct DirListNode *DirListPtr;
+
+void DirListInsert(DirListPtr *ptraddr,char *c){
+    while(*ptraddr!=NULL){
+        ptraddr = &((*ptraddr)->next);
+    }
+    *ptraddr=malloc(sizeof(struct DirListNode));
+    strcpy((*ptraddr)->CountryDir,c);
+    (*ptraddr)->next = NULL;
+}
+
+void DirListPrint(DirListPtr list){
+    while(list!=NULL){
+        printf("Directory:%s\n",list->CountryDir);
+        list=list->next;
+    }
+}
+///////////////////////////////////
+
 //A structure that keeps all the pointers the worker needs to keep
 struct WorkersDataStructs{
     RecordTreeptr InPatients;   //Binary tree to keep "ENTER" Patients
@@ -310,5 +334,6 @@ struct WorkersDataStructs{
     FileTreeptr Filenames;  //Binary tree to keep the files we have read
     DiseaseHT DiseaseHashTable; //it will help for the queries
     int hashtablesize;
+    DirListPtr directories; // a list to keep the directories the worker is responsible
 };
 #endif /* WORKER_DATA_STRUCTURES_H_ */
