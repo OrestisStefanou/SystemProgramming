@@ -167,8 +167,6 @@ void sendDiseaseFrequencyResult(char *server_fifo,queuenode *requests,struct Wor
     char request[100];
     get_item(&requests,request);
     fill_dfData(request,&info);
-    //printf("Virus name is %s\n",info.virusName);
-    //printf("Country is %s\n",info.country);
     RecordTreeptr root = getDiseaseHTvalue(myData->DiseaseHashTable,info.virusName,myData->hashtablesize);  //Get the root of the tree from the diseaseHT
     int result=0;
     if(info.country[0]==0){//Country not given

@@ -100,12 +100,12 @@ int DiseaseFrequencyCount(RecordTreeptr p,Date date1,Date date2,char *c){
             count++;
         }
         if(check_dates(date1,p->record->filedate)){
-            count+=RecordTreeCountWithDates(p->right,date1,date2);
+            count+=DiseaseFrequencyCount(p->right,date1,date2,c);
         }
         else
         {
-            count+=RecordTreeCountWithDates(p->right,date1,date2);
-            count+=RecordTreeCountWithDates(p->left,date1,date2);
+            count+=DiseaseFrequencyCount(p->right,date1,date2,c);
+            count+=DiseaseFrequencyCount(p->left,date1,date2,c);
         }
         
     }

@@ -15,7 +15,6 @@ int main(int argc, char const *argv[])
     pid_t pid;              //For fork()
     char *args[]={"./worker",NULL}; //For exec()
     int ret;                //For error checking
-    int fds[5];     //Array with the file descriptors of the open pipes(useless??)
     pid_t *pids;    //Array with the pids of the workers
 
     int num_of_workers=atoi(argv[1]);   //Number of workers
@@ -45,7 +44,7 @@ int main(int argc, char const *argv[])
             break;
         }
     }
-    printf("Waiting for workers to create their pipes\n");
+    //"Waiting for workers to create their pipes"
     sleep(2);
 
     //Get directories of Country folder
@@ -76,33 +75,31 @@ int main(int argc, char const *argv[])
     }
     //
 
-    //Hashtable testing
-    //for(int i=0;i<hashtable_size;i++){
-    //    printf("Country:%s\n",Hashtable[i].country);
-    //}
-
     //Send a request to all workers with the directories to handle
     FileStatsTreePtr StatsTree = NULL;  //Pointer to the tree where we keep all the stats the workers send us
     char request[100];
     dir_counter=0;
     while(dir_counter<hashtable_size){  //Loop until we send all directories
         for(int i=0;i<num_of_workers;i++){
+            if (dir_counter>=hashtable_size)
+            {
+                break;
+            }
             sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);
             client_fifo_fd = open(client_fifo,O_WRONLY);
             if (client_fifo_fd!=-1)
             {
                 strcpy(request,"Send me the stats\n");
                 write(client_fifo_fd,request,sizeof(request));//Send the request
-                //strcpy(dir_name,Hashtable[dir_counter].country);
                 sprintf(dir_name,"%s/%s","./Countries",Hashtable[dir_counter].country);//Create the directory to send the worker
                 write(client_fifo_fd,dir_name,sizeof(request));//Send the directory name
                 close(client_fifo_fd);
                 sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
-                fds[i] = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
-                while(read_res = read(fds[i],&stats_data,sizeof(stats_data))>0){//Get the stats from the worker
+                server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                while(read_res = read(server_fifo_fd,&stats_data,sizeof(stats_data))>0){//Get the stats from the worker
                     StatsTree = add_FileStatsTree_node(StatsTree,stats_data);   //Insert them in the tree
                 }
-                close(fds[i]);
+                close(server_fifo_fd);
                 Hashtable[dir_counter].worker_pid=pids[i];  //Save the worker's pid in the hashtable
             }
             else    //Something went wrong
@@ -116,17 +113,15 @@ int main(int argc, char const *argv[])
                 Hashtable_Free();
                 exit(EXIT_SUCCESS);
             }
+            dir_counter++;
             memset(request,0,100);
             memset(dir_name,0,100);
-            dir_counter++;
-            if (dir_counter>=hashtable_size)
-            {
-                break;
-            }
-            
+        }
+        if (dir_counter>=hashtable_size)
+        {
+            break;
         }
     }
-
     //printf("The stats are:\n");
     //FileStatsTreePrint(StatsTree);
 
@@ -146,7 +141,7 @@ int main(int argc, char const *argv[])
 
         if(request_code==2){    //DiseaseFrequency
             struct dfData info;
-            int result; //To read from the worker
+            int result=0; //To read from the worker
             int sum=0;    //Final result
             int error = fill_dfData(user_request,&info);//Get the info of the request
             if(error==-1){
@@ -211,7 +206,11 @@ int main(int argc, char const *argv[])
         }
 
         if(request_code==3){    ///topk-AgeRanges
-            topkRanges(user_request);
+            int error = topkRanges(user_request);
+            if(error==-1){
+                printf("Wrong usage\n");
+                continue;
+            }
         }
 
         if(request_code==7){//exit
@@ -226,7 +225,6 @@ int main(int argc, char const *argv[])
 
     //Close file descriptors and delete the pipes,send interrupt signal to workers
     for(int i=0;i<num_of_workers;i++){
-        close(fds[i]);
         sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
         unlink(server_fifo);
         kill(pids[i],SIGINT);
