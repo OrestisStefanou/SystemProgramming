@@ -2,6 +2,7 @@
 #define PARENT_FUNCTIONS_H_
 #include<stdio.h>
 #include<string.h>
+#include"Parent_Data_Structures.h"
 
 //Get the request code of a user request
 int get_request_code(char *buf){
@@ -34,6 +35,16 @@ int get_request_code(char *buf){
         return 6;
     }
     return -1;  //In case of invalid request
+}
+
+void topkRanges(char *buf){
+    int k=0;
+    char country[25];
+    char disease[25];
+    Date entryDate;
+    Date exitDate;
+    int i=0,j=0;
+    
 }
 
 #endif /* PARENT_FUNCTIONS_H_ */

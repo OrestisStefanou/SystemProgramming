@@ -16,12 +16,13 @@ int main(int argc, char const *argv[])
     char *args[]={"./worker",NULL}; //For exec()
     int ret;                //For error checking
     int fds[5];     //Array with the file descriptors of the open pipes(useless??)
-    pid_t pids[5];    //Array with the pids of the workers
+    pid_t *pids;    //Array with the pids of the workers
 
     int num_of_workers=atoi(argv[1]);   //Number of workers
+    pids = malloc(num_of_workers * sizeof(pid_t));
 
     //Create workers
-    for(int i=0;i<3;i++){
+    for(int i=0;i<num_of_workers;i++){
         pid = fork();
         switch (pid)
         {
@@ -85,7 +86,7 @@ int main(int argc, char const *argv[])
     char request[100];
     dir_counter=0;
     while(dir_counter<hashtable_size){  //Loop until we send all directories
-        for(int i=0;i<3;i++){
+        for(int i=0;i<num_of_workers;i++){
             sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);
             client_fifo_fd = open(client_fifo,O_WRONLY);
             if (client_fifo_fd!=-1)
@@ -107,7 +108,7 @@ int main(int argc, char const *argv[])
             else    //Something went wrong
             {
                 printf("Something went wrong with open(server)\n");
-                for(int i=0;i<3;i++){
+                for(int i=0;i<num_of_workers;i++){
                     sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
                     unlink(server_fifo);
                     kill(pids[i],SIGINT);
@@ -143,10 +144,10 @@ int main(int argc, char const *argv[])
             continue;
         }
 
-        if(request_code==2){
+        if(request_code==2){    //DiseaseFrequency
             struct dfData info;
             int result; //To read from the worker
-            int sum;    //Final result
+            int sum=0;    //Final result
             int error = fill_dfData(user_request,&info);//Get the info of the request
             if(error==-1){
                 printf("Wrong usage\n");
@@ -159,9 +160,9 @@ int main(int argc, char const *argv[])
             }
             //If country not given send the request info to all the workers
             if(info.country[0]==0){
-                for(int i=0;i<hashtable_size;i++){
+                for(int i=0;i<num_of_workers;i++){
                     strcpy(request,"/diseaseFrequency");    //Request to send the worker
-                    sprintf(client_fifo,CLIENT_FIFO_NAME,Hashtable[i].worker_pid);  //Create the client pipe name
+                    sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);  //Create the client pipe name
                     client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
                     if(client_fifo_fd==-1){
                         printf("Error during opening client pipe\n");
@@ -171,7 +172,7 @@ int main(int argc, char const *argv[])
                     write(client_fifo_fd,user_request,sizeof(user_request));   //Send the user request
                     close(client_fifo_fd);
                     memset(request,0,100);
-                    sprintf(server_fifo,SERVER_FIFO_NAME,Hashtable[i].worker_pid);  //Create parent pipe name
+                    sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);  //Create parent pipe name
                     server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
                     if(server_fifo_fd==-1){
                         printf("Error during opening server pipe\n");
@@ -181,8 +182,36 @@ int main(int argc, char const *argv[])
                     sum = sum + result;
                     close(server_fifo_fd);
                 }
-                printf("Final result is %d\n",sum);
-            }
+                printf("%d\n",sum);
+            }else
+            {
+                int index = getHashtable_index(info.country);   //Get the index of the worker in the hashtable
+                strcpy(request,"/diseaseFrequency");    //Request to send the worker
+                sprintf(client_fifo,CLIENT_FIFO_NAME,Hashtable[index].worker_pid);  //Create the client pipe name
+                client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
+                if(client_fifo_fd==-1){
+                    printf("Error during opening client pipe\n");
+                    continue;
+                }
+                write(client_fifo_fd,request,sizeof(request));  //Send the request
+                write(client_fifo_fd,user_request,sizeof(user_request));   //Send the user request
+                close(client_fifo_fd);
+                memset(request,0,100);
+                sprintf(server_fifo,SERVER_FIFO_NAME,Hashtable[index].worker_pid);  //Create parent pipe name
+                server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                if(server_fifo_fd==-1){
+                    printf("Error during opening server pipe\n");
+                    continue;
+                }
+                read(server_fifo_fd,&result,sizeof(int));
+                sum = result;
+                close(server_fifo_fd);
+                printf("%d\n",sum);                
+            } 
+        }
+
+        if(request_code==3){    ///topk-AgeRanges
+            topkRanges(user_request);
         }
 
         if(request_code==7){//exit
@@ -196,12 +225,13 @@ int main(int argc, char const *argv[])
     }
 
     //Close file descriptors and delete the pipes,send interrupt signal to workers
-    for(int i=0;i<3;i++){
+    for(int i=0;i<num_of_workers;i++){
         close(fds[i]);
         sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
         unlink(server_fifo);
         kill(pids[i],SIGINT);
     }
+    free(pids);
     Hashtable_Free();
     freeFileStatsTree(StatsTree);
     exit(EXIT_SUCCESS);

@@ -72,6 +72,46 @@ int RecordTreesearch(RecordTreeptr p,struct patient_record *entry){//if entry ex
     }
 }
 
+//Count the patient's records that are between date1 and date2
+int RecordTreeCountWithDates(RecordTreeptr p,Date date1,Date date2){
+    int count = 0;
+    if(p!=NULL){
+        if(check_dates(p->record->filedate,date1)==1 && check_dates(date2,p->record->filedate)==1){
+            count++;
+        }
+        if(check_dates(date1,p->record->filedate)){
+            count+=RecordTreeCountWithDates(p->right,date1,date2);
+        }
+        else
+        {
+            count+=RecordTreeCountWithDates(p->right,date1,date2);
+            count+=RecordTreeCountWithDates(p->left,date1,date2);
+        }
+        
+    }
+    return count;
+}
+
+//For DiseaseFrequency
+int DiseaseFrequencyCount(RecordTreeptr p,Date date1,Date date2,char *c){
+    int count = 0;
+    if(p!=NULL){
+        if(check_dates(p->record->filedate,date1)==1 && check_dates(date2,p->record->filedate)==1 && strcmp(p->record->country,c)==0){
+            count++;
+        }
+        if(check_dates(date1,p->record->filedate)){
+            count+=RecordTreeCountWithDates(p->right,date1,date2);
+        }
+        else
+        {
+            count+=RecordTreeCountWithDates(p->right,date1,date2);
+            count+=RecordTreeCountWithDates(p->left,date1,date2);
+        }
+        
+    }
+    return count;
+}
+
 void freeRecordTree(RecordTreeptr p){
     if(p==NULL){
         return;

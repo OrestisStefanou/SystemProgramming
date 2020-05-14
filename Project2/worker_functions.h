@@ -167,11 +167,19 @@ void sendDiseaseFrequencyResult(char *server_fifo,queuenode *requests,struct Wor
     char request[100];
     get_item(&requests,request);
     fill_dfData(request,&info);
-    printf("Virus name is %s\n",info.virusName);
-    printf("Country is %s\n",info.country);
+    //printf("Virus name is %s\n",info.virusName);
+    //printf("Country is %s\n",info.country);
+    RecordTreeptr root = getDiseaseHTvalue(myData->DiseaseHashTable,info.virusName,myData->hashtablesize);  //Get the root of the tree from the diseaseHT
+    int result=0;
+    if(info.country[0]==0){//Country not given
+        result = RecordTreeCountWithDates(root,info.entry_date,info.exit_date); //Count the nodes that are between the dates given
+    }
+    else    //Country given
+    {
+        result = DiseaseFrequencyCount(root,info.entry_date,info.exit_date,info.country);
+    }
     int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
-    //Just send 1 for testing purposes
-    int result=1;
+    //Send the result to the server
     write(server_fifo_fd,&result,sizeof(result));
     close(server_fifo_fd);   
 }
