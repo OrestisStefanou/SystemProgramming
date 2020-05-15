@@ -76,7 +76,6 @@ int main(int argc, char const *argv[])
     //
 
     //Send a request to all workers with the directories to handle
-    FileStatsTreePtr StatsTree = NULL;  //Pointer to the tree where we keep all the stats the workers send us
     char request[100];
     dir_counter=0;
     while(dir_counter<hashtable_size){  //Loop until we send all directories
@@ -97,7 +96,7 @@ int main(int argc, char const *argv[])
                 sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
                 server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
                 while(read_res = read(server_fifo_fd,&stats_data,sizeof(stats_data))>0){//Get the stats from the worker
-                    StatsTree = add_FileStatsTree_node(StatsTree,stats_data);   //Insert them in the tree
+                    Hashtable[dir_counter].StatsTree = add_FileStatsTree_node(Hashtable[dir_counter].StatsTree,stats_data);   //Insert them in the tree
                 }
                 close(server_fifo_fd);
                 Hashtable[dir_counter].worker_pid=pids[i];  //Save the worker's pid in the hashtable
@@ -213,6 +212,15 @@ int main(int argc, char const *argv[])
             }
         }
 
+        if(request_code==4){    //searchPatientRecord
+            int error = getSearchPatientRecordId(user_request);
+            if(error==-1){
+                printf("Wrong usage\n");
+                continue;
+            }
+            //Send the request to all the workers
+        }
+
         if(request_code==7){//exit
             break;
         }
@@ -231,7 +239,6 @@ int main(int argc, char const *argv[])
     }
     free(pids);
     Hashtable_Free();
-    freeFileStatsTree(StatsTree);
     exit(EXIT_SUCCESS);
     return 0;
 }

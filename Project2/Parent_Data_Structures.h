@@ -1,6 +1,7 @@
 #ifndef PARENT_DATA_STRUCTURES_H_
 #define PARENT_DATA_STRUCTURES_H_
 #include"pipe.h"
+#include"request.h"
 
 //StatsTree
 struct FileStatsTreeNode{
@@ -48,13 +49,52 @@ void freeFileStatsTree(FileStatsTreePtr p){
     freeFileStatsTree(p->right);
     free(p);
 }
+//Use it in topk-AgeRange query
+struct topkAgeRangeData topkAgeRangeCount(FileStatsTreePtr p,char *d,Date date1,Date date2){
+    struct topkAgeRangeData data,data2;
+    for(int i=0;i<4;i++){
+        data.ages[i]=0;
+    }
+    data.total_patients=0;
+    if(p!=NULL){
+        if(check_dates(p->fileStats.file_date,date1)==1 && check_dates(date2,p->fileStats.file_date)==1 && strcmp(p->fileStats.Disease,d)==0){
+            for(int i=0;i<4;i++){
+                data.ages[i] = data.ages[i] + p->fileStats.Age_counter[i];
+                data.total_patients+=p->fileStats.Age_counter[i];
+            }
+        }
+        if(check_dates(date1,p->fileStats.file_date)){
+            data2=topkAgeRangeCount(p->right,d,date1,date2);
+            for(int i=0;i<4;i++){
+                data.ages[i]+=data2.ages[i];
+                data.total_patients+=data2.ages[i];
+            }
+        }
+        else
+        {
+            data2=topkAgeRangeCount(p->right,d,date1,date2);
+            for(int i=0;i<4;i++){
+                data.ages[i]+=data2.ages[i];
+                data.total_patients+=data2.ages[i];
+            }
+            data2=topkAgeRangeCount(p->left,d,date1,date2);
+            for(int i=0;i<4;i++){
+                data.ages[i]+=data2.ages[i];
+                data.total_patients+=data2.ages[i];
+            }
+        }
+        
+    }
+    return data;
+}
 //////////////////////////////////
+
 //Hash table data structure
 struct Hashtable_entry
 {
     char country[30];
     pid_t worker_pid;
-    //Pointer se root dentrou me tha exi ta statistics tis xoras
+    FileStatsTreePtr StatsTree;//Pointer se root dentrou me tha exi ta statistics tis xoras
 };
 typedef struct Hashtable_entry htable_entry;    //Each entry of the hashtable is a country with
                                                 //the pid of the worker that is handling it and 
@@ -71,7 +111,7 @@ void Hashtable_init(int table_size){
     for(int i=0;i<hashtable_size;i++){
         Hashtable[i].country[0]=0;  //To know if is "empty"
         Hashtable[i].worker_pid = 0; //No worker on it yet
-        //Hashtable[i].root = NULL
+        Hashtable[i].StatsTree = NULL;
     } 
 }
 
@@ -121,8 +161,10 @@ int getHashtable_index(char *c){
 }
 
 void Hashtable_Free(){
-    //for(int i=0;i<hashtable_size;i++)
+    for(int i=0;i<hashtable_size;i++){
         //free the trees root
+        freeFileStatsTree(Hashtable[i].StatsTree);
+    }
     free(Hashtable);
 }
 

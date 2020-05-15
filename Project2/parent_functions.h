@@ -3,6 +3,7 @@
 #include<stdio.h>
 #include<string.h>
 #include"Parent_Data_Structures.h"
+#include"request.h"
 
 //Get the request code of a user request
 int get_request_code(char *buf){
@@ -35,6 +36,23 @@ int get_request_code(char *buf){
         return 6;
     }
     return -1;  //In case of invalid request
+}
+//Bubble sort function
+void swap(struct ageRangeStats *x,struct ageRangeStats *y){
+    struct ageRangeStats temp = *x;
+    *x=*y;
+    *y = temp;
+}
+
+void bubbleSort(struct ageRangeStats arr[],int n){
+    int i,j;
+    for(i=0;i<n-1;i++){
+        for(j=0;j<n-i-1;j++){
+            if(arr[j].number < arr[j+1].number){
+                swap(&arr[j],&arr[j+1]);
+            }
+        }
+    }
 }
 
 int topkRanges(char *buf){
@@ -164,20 +182,46 @@ int topkRanges(char *buf){
     i++;
     j=0;
     //get year
-    while(buf[i]!='\n'){
+    while(buf[i]!='\n' && buf[i]!=' '){
         temp_date[j]=buf[i];
         j++;
         i++;
     }
     temp_date[j]='\0';
     exitDate.year=atoi(temp_date);
-    printf("K=%d\n",k);
-    printf("Country:%s\n",country);
-    printf("Disease:%s\n",disease);
-    printf("Entry date:");
-    print_date(&entryDate);
-    printf("Exit date:");
-    print_date(&exitDate);
+    //printf("K=%d\n",k);
+    //printf("Country:%s\n",country);
+    //printf("Disease:%s\n",disease);
+    //printf("Entry date:");
+    //print_date(&entryDate);
+    //printf("Exit date:");
+    //print_date(&exitDate);
+
+    struct topkAgeRangeData data;
+    struct ageRangeStats array[4];
+    int index = getHashtable_index(country);    //Get the index of the country in the HT
+    FileStatsTreePtr root = Hashtable[index].StatsTree; //Get the root of the tree where the stats are
+    data = topkAgeRangeCount(root,disease,entryDate,exitDate);
+    //printf("Total patients %d\n",data.total_patients);
+    for(i=0;i<4;i++){   //Insert the data in the array to sort them
+        array[i].index=i;
+        array[i].number=data.ages[i];
+    }
+    //Sort the array
+    bubbleSort(array,4);
+    //Transform the array to % format
+    float num;
+    for(int i=0;i<4;i++){
+        num = data.total_patients/array[i].number;
+        array[i].number = 100 / num; 
+    }
+    //Print the results
+    for(int i=0;i<k;i++){
+        if(i>=4){
+            break;
+        }
+        ageRangePrint(array[i]);
+    }
 }
 
 #endif /* PARENT_FUNCTIONS_H_ */

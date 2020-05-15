@@ -9,6 +9,42 @@ struct dfData{
     Date exit_date;
     char country[25];
 };
+//topk-AgeRanges query struct
+struct topkAgeRangeData{
+    int total_patients;
+    int ages[4];
+};
+//////////////////////////////
+
+//To sort topkAgeRangeCount records
+struct ageRangeStats
+{
+    int index;
+    float number;
+};
+
+void ageRangePrint(struct ageRangeStats stats){
+    if(stats.index==0){
+        printf("0-20:%0.0f%c\n",stats.number,'%');
+        return;
+    }
+
+    if(stats.index==1){
+        printf("21-40:%0.0f%c\n",stats.number,'%');
+        return;
+    }
+
+    if(stats.index==2){
+        printf("41-60:%0.0f%c\n",stats.number,'%');
+        return;
+    }
+
+    if(stats.index==3){
+        printf("60+:%0.0f%c\n",stats.number,'%');
+        return;
+    }
+}
+////////////////////////////////////
 
 //Get the input of the user and fill the dfData structure
 //returns -1 in case of error
@@ -120,7 +156,7 @@ int fill_dfData(char *buf,struct dfData *data){
     //Get country
     i++;
     j=0;
-    while (buf[i]!='\n')
+    while (buf[i]!='\n' && buf[i]!=' ')
     {
         data->country[j]=buf[i];
         i++;
@@ -128,5 +164,32 @@ int fill_dfData(char *buf,struct dfData *data){
     }
     data->country[j]='\0';
     return 0;
+}
+
+//Use it for searchPatientRecord
+//Returns the recordID of the patient to search
+//-1 on error
+int getSearchPatientRecordId(char *buf){
+    int i=0,j=0;
+    char id[10];
+    //Skip request command
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    i++;
+
+    //Get id
+    while(buf[i]!='\n' && buf[i]!=' '){
+        id[j] = buf[i];
+        j++;
+        i++;
+    }
+    i++;
+    id[j]='\0';
+    int recordID = atoi(id);
+    return recordID;    
 }
 #endif /* REQUEST_H_ */
