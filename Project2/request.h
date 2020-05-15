@@ -14,7 +14,6 @@ struct topkAgeRangeData{
     int total_patients;
     int ages[4];
 };
-//////////////////////////////
 
 //To sort topkAgeRangeCount records
 struct ageRangeStats
@@ -22,6 +21,18 @@ struct ageRangeStats
     int index;
     float number;
 };
+//////////////////////////////
+//To use in searchPatientRecord
+struct searchPatientData{
+    char id[10];
+    char patientName[25];
+    char patientLastName[25];
+    char patientDisease[25];
+    int patientAge;
+    Date patientEntryDate;
+    Date patientExitDate;
+};
+/////////////////////////////
 
 void ageRangePrint(struct ageRangeStats stats){
     if(stats.index==0){
@@ -169,7 +180,7 @@ int fill_dfData(char *buf,struct dfData *data){
 //Use it for searchPatientRecord
 //Returns the recordID of the patient to search
 //-1 on error
-int getSearchPatientRecordId(char *buf){
+int getSearchPatientRecordId(char *buf,char *recordId){
     int i=0,j=0;
     char id[10];
     //Skip request command
@@ -189,7 +200,7 @@ int getSearchPatientRecordId(char *buf){
     }
     i++;
     id[j]='\0';
-    int recordID = atoi(id);
-    return recordID;    
+    strcpy(recordId,id);
+    return 1;    
 }
 #endif /* REQUEST_H_ */

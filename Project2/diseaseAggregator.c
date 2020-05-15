@@ -213,12 +213,51 @@ int main(int argc, char const *argv[])
         }
 
         if(request_code==4){    //searchPatientRecord
-            int error = getSearchPatientRecordId(user_request);
+            char rID[10];
+            int error = getSearchPatientRecordId(user_request,rID);
+            int flag=0;
             if(error==-1){
                 printf("Wrong usage\n");
                 continue;
             }
             //Send the request to all the workers
+            for(int i=0;i<num_of_workers;i++){
+                strcpy(request,"/searchPatient");    //Request to send the worker
+                sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);  //Create the client pipe name
+                client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
+                if(client_fifo_fd==-1){
+                    printf("Error during opening client pipe\n");
+                    continue;
+                }
+                write(client_fifo_fd,request,sizeof(request));  //Send the request
+                write(client_fifo_fd,user_request,sizeof(user_request));   //Send the user request
+                close(client_fifo_fd);
+                memset(request,0,100);
+                sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);  //Create parent pipe name
+                server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                if(server_fifo_fd==-1){
+                    printf("Error during opening server pipe\n");
+                    continue;
+                }
+                //Read the response
+                struct searchPatientData response;
+                read(server_fifo_fd,&response,sizeof(response));
+                close(server_fifo_fd);
+                if(response.patientAge!=-1){    //Record found
+                    if(response.patientExitDate.day!=-1){   //There is an exit date
+                        printf("%s %s %s %s %d %d-%d-%d %d-%d-%d\n",response.id,response.patientName,response.patientLastName,response.patientDisease,response.patientAge,response.patientEntryDate.day,response.patientEntryDate.month,response.patientEntryDate.year,response.patientExitDate.day,response.patientExitDate.month,response.patientExitDate.year);
+                    }
+                    else    //There is no exit date
+                    {
+                        printf("%s %s %s %s %d %d-%d-%d --\n",response.id,response.patientName,response.patientLastName,response.patientDisease,response.patientAge,response.patientEntryDate.day,response.patientEntryDate.month,response.patientEntryDate.year);
+                    }
+                    flag=1;
+                    break;  //No need to ask other workers
+                }
+            }
+            if(flag==0){    //record not found
+                printf("Record not found\n");
+            }
         }
 
         if(request_code==7){//exit
@@ -242,4 +281,3 @@ int main(int argc, char const *argv[])
     exit(EXIT_SUCCESS);
     return 0;
 }
-

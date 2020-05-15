@@ -2,6 +2,7 @@
 #define WORKER_DATA_STRUCTURES_H_
 #include"pipe.h"
 #include"patient.h"
+#include"request.h"
 
 //BinaryTree to keep PatientRecords
 struct RecordTreenode{
@@ -54,8 +55,8 @@ void RecordTreenode_print(RecordTreeptr p){
     }
 }
 
-
-int RecordTreesearch(RecordTreeptr p,struct patient_record *entry){//if entry exists in the tree return 1 else return 0
+//if entry exists in the tree return 1 else return 0
+int RecordTreesearch(RecordTreeptr p,struct patient_record *entry){
     int cond;
     if(p==NULL){//tree is empty
         return 0;
@@ -69,6 +70,37 @@ int RecordTreesearch(RecordTreeptr p,struct patient_record *entry){//if entry ex
     else
     {
         return RecordTreesearch(p->left,entry);
+    }
+}
+
+//Search for record with id='id'.If found fill the data and return 1 else return 0
+//If flag==1->Fill the entry date
+//If flag==0->Fill the exit date
+int RecordTreesearchPatientId(RecordTreeptr p,char *id,struct searchPatientData *data,int flag){
+    int cond;
+    if(p==NULL){    //Tree is empty
+        return 0;
+    }
+    if((cond=strcmp(id,p->record->recordID))==0){   //Record found
+        if(flag==1){
+            data->patientEntryDate = p->record->filedate;
+        }else
+        {
+            data->patientExitDate = p->record->filedate;
+        }
+        strcpy(data->id,p->record->recordID);
+        strcpy(data->patientDisease,p->record->disease);
+        strcpy(data->patientName,p->record->name);
+        strcpy(data->patientLastName,p->record->surname);
+        data->patientAge=p->record->age;
+        return 1;
+    }
+    else if(cond>0){
+        return RecordTreesearchPatientId(p->right,id,data,flag);
+    }
+    else
+    {
+        return RecordTreesearchPatientId(p->left,id,data,flag);
     }
 }
 

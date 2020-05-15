@@ -182,4 +182,32 @@ void sendDiseaseFrequencyResult(char *server_fifo,queuenode *requests,struct Wor
     close(server_fifo_fd);   
 }
 
+
+void sendSearchPatientResult(char *server_fifo,queuenode *requests,struct WorkersDataStructs *myData){
+    struct searchPatientData data_to_send;
+    data_to_send.patientAge=-1; //To know if the record found
+    data_to_send.patientExitDate.day=-1;    //To know if patient exited 
+    char request[100];
+    get_item(&requests,request);
+    char record_id[10];
+    getSearchPatientRecordId(request,record_id);
+    //Search for this id in the trees
+    //First search in the "IN" Tree
+    RecordTreesearchPatientId(myData->InPatients,record_id,&data_to_send,1);
+    if(data_to_send.patientAge==-1){    //Record not found
+        int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+        //Send the result to the server
+        write(server_fifo_fd,&data_to_send,sizeof(data_to_send));
+        close(server_fifo_fd);
+        return;   
+    }
+    //Check if Patient Exited
+    RecordTreesearchPatientId(myData->OutPatients,record_id,&data_to_send,0);
+    printf("Exit date is:");
+    print_date(&data_to_send.patientExitDate);
+    int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+    //Send the result to the server
+    write(server_fifo_fd,&data_to_send,sizeof(data_to_send));
+    close(server_fifo_fd);
+}
 #endif /* WORKER_FUNCTIONS_H_ */
