@@ -23,6 +23,7 @@ Date get_date(char *date_in_char){//Converts string date to myDate struct
         i++;
         j++;
     }
+    temp[j]='\0';
     date_in_int.day=atoi(temp);
     //Get month
     j=0;
@@ -32,6 +33,7 @@ Date get_date(char *date_in_char){//Converts string date to myDate struct
         i++;
         j++;
     }
+    temp[j]='\0';
     date_in_int.month=atoi(temp);
     //Get year
     j=0;
@@ -41,6 +43,7 @@ Date get_date(char *date_in_char){//Converts string date to myDate struct
         i++;
         j++;
     }
+    temp[j]='\0';
     date_in_int.year=atoi(temp);
     return date_in_int;    
 }
