@@ -224,4 +224,150 @@ int topkRanges(char *buf){
     }
 }
 
+
+int getPatientAdmissions(char *buf){
+    int i=0,j=0;
+    char virus[25];
+    char country[25];
+    Date entryDate;
+    Date exitDate;
+    char temp_date[5];
+
+    //Skip request command
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    i++;
+
+    //Get disease
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        virus[j] = buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    i++;
+    virus[j]='\0';
+    
+    //Get enter date
+    j=0;
+    //get day
+    while(buf[i]!='-' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    entryDate.day=atoi(temp_date);
+    i++;
+    j=0;
+    //get month
+    while(buf[i]!='-' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    entryDate.month=atoi(temp_date);
+    i++;
+    j=0;
+    //get year
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    entryDate.year=atoi(temp_date);
+    i++;
+
+    //Get exit date
+    j=0;
+    //get day
+    while(buf[i]!='-' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    exitDate.day=atoi(temp_date);
+    i++;
+    j=0;
+    //get month
+    while(buf[i]!='-' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    exitDate.month=atoi(temp_date);
+    i++;
+    j=0;
+    //get year
+    while(buf[i]!='\n' && buf[i]!=' '){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    temp_date[j]='\0';
+    exitDate.year=atoi(temp_date);
+
+    if(buf[i]=='\n'){   //Country not given
+        int sum;
+        FileStatsTreePtr root;
+        //Go through all the trees in the Hashtable
+        for(int i=0;i<hashtable_size;i++){
+            root = Hashtable[i].StatsTree;  //Get the root of the tree
+            sum = countAdmissionPatients(root,virus,entryDate,exitDate);    //CountAdmissionPatients of this country
+            if(sum>0){
+                printf("%s %d\n",Hashtable[i].country,sum);
+            }
+        }
+        return 0;
+    }
+
+    //Get country
+    i++;
+    j=0;
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        country[j] = buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]==' '){
+        return -1;
+    }
+    i++;
+    country[j]='\0';
+    int index = getHashtable_index(country);    //Get the index of the country in the HT
+    if(index==-1){
+        printf("There are no data for this country\n");
+        return 0;
+    }
+    FileStatsTreePtr root=Hashtable[index].StatsTree;   //Get the root of the tree
+    int sum=countAdmissionPatients(root,virus,entryDate,exitDate);  //Count admission Patients
+    printf("%s %d\n",country,sum);
+    return 0;  
+}
+
 #endif /* PARENT_FUNCTIONS_H_ */

@@ -34,6 +34,15 @@ struct searchPatientData{
 };
 /////////////////////////////
 
+//To use in PatientDischarges
+struct PatientDischargesData{
+    char virusName[25];
+    char countryName[25];
+    Date entry_date;
+    Date exit_date;
+};
+/////////////////////////////
+
 void ageRangePrint(struct ageRangeStats stats){
     if(stats.index==0){
         printf("0-20:%0.0f%c\n",stats.number,'%');
@@ -202,5 +211,128 @@ int getSearchPatientRecordId(char *buf,char *recordId){
     id[j]='\0';
     strcpy(recordId,id);
     return 1;    
+}
+
+//Get user request and fill struct PatientDischargesData struct
+void fillPatientDischargesData(char *buf,struct PatientDischargesData *data){
+    int i=0,j=0;
+    char temp_date[5];
+    //Skip request command
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    i++;
+
+    //Get disease
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        data->virusName[j] = buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    i++;
+    data->virusName[j]='\0';
+
+    //Get enter date
+    j=0;
+    //get day
+    while(buf[i]!='-' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    data->entry_date.day=atoi(temp_date);
+    i++;
+    j=0;
+    //get month
+    while(buf[i]!='-' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    data->entry_date.month=atoi(temp_date);
+    i++;
+    j=0;
+    //get year
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    data->entry_date.year=atoi(temp_date);
+    i++;
+
+    //Get exit date
+    j=0;
+    //get day
+    while(buf[i]!='-' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    data->exit_date.day=atoi(temp_date);
+    i++;
+    j=0;
+    //get month
+    while(buf[i]!='-' && buf[i]!='\n'){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    temp_date[j]='\0';
+    data->exit_date.month=atoi(temp_date);
+    i++;
+    j=0;
+    //get year
+    while(buf[i]!='\n' && buf[i]!=' '){
+        temp_date[j]=buf[i];
+        j++;
+        i++;
+    }
+    temp_date[j]='\0';
+    data->exit_date.year=atoi(temp_date);
+
+    if(buf[i]=='\n'){   //Country not given
+        data->countryName[0]=0;
+        return 0;
+    }
+    //Get country
+    i++;
+    j=0;
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        data->countryName[j] = buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]==' '){
+        return -1;
+    }
+    i++;
+    data->countryName[j]='\0';
+    return 0;
 }
 #endif /* REQUEST_H_ */

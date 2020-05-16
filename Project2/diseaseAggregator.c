@@ -260,6 +260,14 @@ int main(int argc, char const *argv[])
             }
         }
 
+        if(request_code==5){    //numPatientAdmissions
+            int error = getPatientAdmissions(user_request);
+            if(error==-1){
+                printf("Wrong usage\n");
+                continue;
+            }
+        }
+
         if(request_code==7){//exit
             break;
         }

@@ -87,6 +87,28 @@ struct topkAgeRangeData topkAgeRangeCount(FileStatsTreePtr p,char *d,Date date1,
     }
     return data;
 }
+
+//Use it for numPatientAdmissions
+int countAdmissionPatients(FileStatsTreePtr p,char *d,Date date1,Date date2){
+    int count=0;
+    if(p!=NULL){
+        if(check_dates(p->fileStats.file_date,date1)==1 && check_dates(date2,p->fileStats.file_date)==1 && strcmp(p->fileStats.Disease,d)==0){
+            for(int i=0;i<4;i++){
+                count=count + p->fileStats.Age_counter[i];
+            }
+        }
+        if(check_dates(date1,p->fileStats.file_date)){
+            count+=countAdmissionPatients(p->right,d,date1,date2);
+        }
+        else
+        {
+            count+=countAdmissionPatients(p->right,d,date1,date2);
+            count+=countAdmissionPatients(p->left,d,date1,date2);
+        }
+        
+    }
+    return count;
+}
 //////////////////////////////////
 
 //Hash table data structure
