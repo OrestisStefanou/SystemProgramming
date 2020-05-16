@@ -214,7 +214,7 @@ int getSearchPatientRecordId(char *buf,char *recordId){
 }
 
 //Get user request and fill struct PatientDischargesData struct
-void fillPatientDischargesData(char *buf,struct PatientDischargesData *data){
+int fillPatientDischargesData(char *buf,struct PatientDischargesData *data){
     int i=0,j=0;
     char temp_date[5];
     //Skip request command

@@ -268,6 +268,72 @@ int main(int argc, char const *argv[])
             }
         }
 
+        if(request_code==6){    //numPatientDischarges
+            struct PatientDischargesData data;
+            int error = fillPatientDischargesData(user_request,&data);
+            char newRequest[100];
+            if(error==-1){
+                printf("Wrong usage\n");
+                continue;
+            }
+            if(data.countryName[0]==0){ //Country not given
+                //Send the request to all the workers
+                for(int i=0;i<hashtable_size;i++){
+                    user_request[strlen(user_request)-1]=' '; 
+                    sprintf(newRequest,"%s%s\n",user_request,Hashtable[i].country);//Add the country to the request
+                    //printf("Sending request:%s\n",newRequest);
+                    strcpy(request,"/PatientDischarges");    //Request to send the worker
+                    sprintf(client_fifo,CLIENT_FIFO_NAME,Hashtable[i].worker_pid);  //Create the client pipe name
+                    client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
+                    if(client_fifo_fd==-1){
+                        printf("Error during opening client pipe\n");
+                        continue;
+                    }
+                    write(client_fifo_fd,request,sizeof(request));  //Send the request
+                    write(client_fifo_fd,newRequest,sizeof(newRequest));   //Send the user request
+                    close(client_fifo_fd);
+                    memset(request,0,100);
+                    sprintf(server_fifo,SERVER_FIFO_NAME,Hashtable[i].worker_pid);  //Create parent pipe name
+                    server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                    if(server_fifo_fd==-1){
+                        printf("Error during opening server pipe\n");
+                        continue;
+                    }
+                    //Read the response
+                    int response;
+                    read(server_fifo_fd,&response,sizeof(response));
+                    close(server_fifo_fd);
+                    printf("%s %d\n",Hashtable[i].country,response);
+                }                    
+            }else   //Country given
+            {
+                int index = getHashtable_index(data.countryName);   //Get the worker's index in the HT
+                strcpy(request,"/PatientDischarges");    //Request to send the worker
+                sprintf(client_fifo,CLIENT_FIFO_NAME,Hashtable[index].worker_pid);  //Create the client pipe name
+                client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
+                if(client_fifo_fd==-1){
+                    printf("Error during opening client pipe\n");
+                    continue;
+                }
+                write(client_fifo_fd,request,sizeof(request));  //Send the request
+                write(client_fifo_fd,user_request,sizeof(user_request));   //Send the user request
+                close(client_fifo_fd);
+                memset(request,0,100);
+                sprintf(server_fifo,SERVER_FIFO_NAME,Hashtable[index].worker_pid);  //Create parent pipe name
+                server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                    if(server_fifo_fd==-1){
+                    printf("Error during opening server pipe\n");
+                    continue;
+                }
+                //Read the response
+                int response;
+                read(server_fifo_fd,&response,sizeof(response));
+                close(server_fifo_fd);
+                printf("%s %d\n",Hashtable[index].country,response);
+            }
+            
+        }
+
         if(request_code==7){//exit
             break;
         }

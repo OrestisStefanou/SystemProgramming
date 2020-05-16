@@ -70,6 +70,10 @@ int main(int argc, char const *argv[])
         if(strcmp(request,"/searchPatient")==0){
             sendSearchPatientResult(server_fifo,request_queue,&myData); //Request queue has the user's request
         }
+
+        if(strcmp(request,"/PatientDischarges")==0){
+            sendPatientDischargesResult(server_fifo,request_queue,&myData);////Request queue has the user's request
+        }
     }
     unlink(client_fifo);
     exit(EXIT_SUCCESS);

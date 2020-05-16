@@ -210,4 +210,24 @@ void sendSearchPatientResult(char *server_fifo,queuenode *requests,struct Worker
     write(server_fifo_fd,&data_to_send,sizeof(data_to_send));
     close(server_fifo_fd);
 }
+
+void sendPatientDischargesResult(char *server_fifo,queuenode *requests,struct WorkersDataStructs *myData){
+    struct PatientDischargesData data_to_read;
+    char request[100];
+    get_item(&requests,request);
+    fillPatientDischargesData(request,&data_to_read);
+    //printf("Disease:%s\n",data_to_read.virusName);
+    //printf("COuntry:%s\n",data_to_read.countryName);
+    //p/rintf("Enter date:");
+    //print_date(&data_to_read.entry_date);
+    //printf("Exit date:");
+    //print_date(&data_to_read.exit_date);
+    
+    //Count the patients
+    int result=PatientDischargesCount(myData->OutPatients,data_to_read.entry_date,data_to_read.exit_date,data_to_read.countryName,data_to_read.virusName);
+    int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+    //Send the result to the server
+    write(server_fifo_fd,&result,sizeof(result));
+    close(server_fifo_fd);
+}
 #endif /* WORKER_FUNCTIONS_H_ */

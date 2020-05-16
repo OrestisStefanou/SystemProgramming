@@ -144,6 +144,26 @@ int DiseaseFrequencyCount(RecordTreeptr p,Date date1,Date date2,char *c){
     return count;
 }
 
+//For numPatientDischarges
+int PatientDischargesCount(RecordTreeptr p,Date date1,Date date2,char *c,char *d){
+    int count = 0;
+    if(p!=NULL){
+        if(check_dates(p->record->filedate,date1)==1 && check_dates(date2,p->record->filedate)==1 && strcmp(p->record->country,c)==0 && strcmp(p->record->disease,d)==0){
+            count++;
+        }
+        if(check_dates(date1,p->record->filedate)){
+            count+=PatientDischargesCount(p->right,date1,date2,c,d);
+        }
+        else
+        {
+            count+=PatientDischargesCount(p->right,date1,date2,c,d);
+            count+=PatientDischargesCount(p->left,date1,date2,c,d);
+        }
+        
+    }
+    return count;    
+}
+
 void freeRecordTree(RecordTreeptr p){
     if(p==NULL){
         return;
