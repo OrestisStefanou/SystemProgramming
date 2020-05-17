@@ -164,11 +164,24 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
 
 void sendDiseaseFrequencyResult(char *server_fifo,queuenode *requests,struct WorkersDataStructs *myData){
     struct dfData info;
+    int result=0;
     char request[100];
     get_item(&requests,request);
     fill_dfData(request,&info);
     RecordTreeptr root = getDiseaseHTvalue(myData->DiseaseHashTable,info.virusName,myData->hashtablesize);  //Get the root of the tree from the diseaseHT
-    int result=0;
+    if(root==NULL){ //No data for this disease
+        myData->rStats.failedRequests++;
+        int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+        if(server_fifo_fd==-1){
+            myData->rStats.failedRequests++;
+            return;
+        }
+        //Send the result to the server
+        write(server_fifo_fd,&result,sizeof(result));
+        close(server_fifo_fd);
+        return;
+    }
+    
     if(info.country[0]==0){//Country not given
         result = RecordTreeCountWithDates(root,info.entry_date,info.exit_date); //Count the nodes that are between the dates given
     }
@@ -176,7 +189,12 @@ void sendDiseaseFrequencyResult(char *server_fifo,queuenode *requests,struct Wor
     {
         result = DiseaseFrequencyCount(root,info.entry_date,info.exit_date,info.country);
     }
+    myData->rStats.successRequests++;
     int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+    if(server_fifo_fd==-1){
+        myData->rStats.failedRequests++;
+        return;
+    }
     //Send the result to the server
     write(server_fifo_fd,&result,sizeof(result));
     close(server_fifo_fd);   
@@ -195,7 +213,12 @@ void sendSearchPatientResult(char *server_fifo,queuenode *requests,struct Worker
     //First search in the "IN" Tree
     RecordTreesearchPatientId(myData->InPatients,record_id,&data_to_send,1);
     if(data_to_send.patientAge==-1){    //Record not found
+        myData->rStats.successRequests++;
         int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+        if(server_fifo_fd==-1){
+            myData->rStats.failedRequests++;
+            return;
+        }   
         //Send the result to the server
         write(server_fifo_fd,&data_to_send,sizeof(data_to_send));
         close(server_fifo_fd);
@@ -203,9 +226,14 @@ void sendSearchPatientResult(char *server_fifo,queuenode *requests,struct Worker
     }
     //Check if Patient Exited
     RecordTreesearchPatientId(myData->OutPatients,record_id,&data_to_send,0);
-    printf("Exit date is:");
-    print_date(&data_to_send.patientExitDate);
+    //printf("Exit date is:");
+    //print_date(&data_to_send.patientExitDate);
+    myData->rStats.successRequests++;
     int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+    if(server_fifo_fd==-1){
+        myData->rStats.failedRequests++;
+        return;
+    }
     //Send the result to the server
     write(server_fifo_fd,&data_to_send,sizeof(data_to_send));
     close(server_fifo_fd);
@@ -225,7 +253,12 @@ void sendPatientDischargesResult(char *server_fifo,queuenode *requests,struct Wo
     
     //Count the patients
     int result=PatientDischargesCount(myData->OutPatients,data_to_read.entry_date,data_to_read.exit_date,data_to_read.countryName,data_to_read.virusName);
+    myData->rStats.successRequests++;
     int server_fifo_fd = open(server_fifo,O_WRONLY);//Open server pipe
+    if(server_fifo_fd==-1){
+        myData->rStats.failedRequests++;
+        return;
+    }
     //Send the result to the server
     write(server_fifo_fd,&result,sizeof(result));
     close(server_fifo_fd);

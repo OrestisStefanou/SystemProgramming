@@ -12,7 +12,30 @@ void terminate(int sig){
     printf("Got the interrupt signal and exiting\n");
     unlink(client_fifo);
     (void) signal(SIGINT, SIG_DFL);
+    char logfile[50];   //To create the logfilename
+    char country[25];
+    sprintf(logfile,"./logfiles/log_file.%d",getpid());
+    FILE *fp=fopen(logfile,"w");    //Create and open the file
+    //Write the countries in the logfile
+    DirListPtr temp=myData.directories;
+    while(temp!=NULL){
+        getCountryFromDir(temp->CountryDir,country);
+        fprintf(fp,"%s\n",country);
+        memset(country,0,25);
+        temp=temp->next;
+    }
+    ////////////////////////////////////
+    //Write the stats in the logfile
+    fprintf(fp,"TOTAL %d\n",myData.rStats.totalRequests);
+    fprintf(fp,"SUCCESS %d\n",myData.rStats.successRequests);
+    fprintf(fp,"FAIL %d\n",myData.rStats.failedRequests);
+    fclose(fp);
     //FREE THE MEMORY
+    freeRecordTree(myData.InPatients);
+    freeRecordTree(myData.OutPatients);
+    freeFilesTree(myData.Filenames);
+    freeDiseaseHT(myData.DiseaseHashTable,myData.hashtablesize);
+    freeDirList(&myData.directories);
     exit(EXIT_SUCCESS);
 }
 
@@ -29,6 +52,9 @@ int main(int argc, char const *argv[])
     myData.DiseaseHashTable = create_DiseaseHashtable(15);
     myData.hashtablesize=15;
     myData.directories=NULL;
+    myData.rStats.failedRequests=0;
+    myData.rStats.successRequests=0;
+    myData.rStats.totalRequests=0;
     //////////////////////////////////////////////
     sprintf(server_fifo,SERVER_FIFO_NAME,getpid()); //Create server pipe name
     sprintf(client_fifo,CLIENT_FIFO_NAME,getpid());//Create pipe to read from the server
@@ -64,14 +90,17 @@ int main(int argc, char const *argv[])
         }
         
         if(strcmp(request,"/diseaseFrequency")==0){
+            myData.rStats.totalRequests++;
             sendDiseaseFrequencyResult(server_fifo,request_queue,&myData);//Request queue has the user's request
         }
 
         if(strcmp(request,"/searchPatient")==0){
+            myData.rStats.totalRequests++;
             sendSearchPatientResult(server_fifo,request_queue,&myData); //Request queue has the user's request
         }
 
         if(strcmp(request,"/PatientDischarges")==0){
+            myData.rStats.totalRequests++;
             sendPatientDischargesResult(server_fifo,request_queue,&myData);////Request queue has the user's request
         }
     }

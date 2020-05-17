@@ -316,6 +316,18 @@ RecordTreeptr getDiseaseHTvalue(DiseaseHT table,char *c,int size){
     }
     return NULL;
 }
+
+void freeDiseaseHT(DiseaseHT table,int size){
+    DiseaseHTentry *current,*next_entry;
+    for(int i=0;i<size;i++){
+        current=table[i];
+        while(current!=NULL){
+            next_entry=current->next;
+            free(current);
+            current=next_entry;
+        }
+    }
+}
 ///////////////////////////////////////////////////////////////////
 
 //List to keep statistics
@@ -417,6 +429,18 @@ void DirListPrint(DirListPtr list){
         list=list->next;
     }
 }
+
+void freeDirList(DirListPtr *list){
+    DirListPtr current=*list;
+    DirListPtr next_node;
+    while (current!=NULL)
+    {
+        next_node=current->next;
+        free(current);
+        current=next_node;
+    }
+    
+}
 ///////////////////////////////////
 
 //A structure that keeps all the pointers the worker needs to keep
@@ -427,5 +451,6 @@ struct WorkersDataStructs{
     DiseaseHT DiseaseHashTable; //it will help for the queries
     int hashtablesize;
     DirListPtr directories; // a list to keep the directories the worker is responsible
+    struct requestStats rStats; //Keep count of the requests
 };
 #endif /* WORKER_DATA_STRUCTURES_H_ */

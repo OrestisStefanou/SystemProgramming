@@ -36,4 +36,13 @@ void File_Stats_Print(File_Stats *stats){
     printf("Patients between age 60+:%d\n",stats->Age_counter[3]);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+struct requestStats
+{
+    int totalRequests;
+    int successRequests;
+    int failedRequests;
+};
+
 #endif /* PIPE_H_ */

@@ -14,7 +14,7 @@ typedef struct FileStatsTreeNode *FileStatsTreePtr;
 //Insert FileStats in the tree(Sorted by date)
 FileStatsTreePtr add_FileStatsTree_node(FileStatsTreePtr p,struct File_Statistics fStats){
     if(p==NULL){//Tree is empty
-        p = malloc(sizeof(struct FileStatsTreeNode));
+        p = (struct FileStatsTreeNode *)malloc(sizeof(struct FileStatsTreeNode));
         p->fileStats.file_date=fStats.file_date;
         strcpy(p->fileStats.Country,fStats.Country);
         strcpy(p->fileStats.Disease,fStats.Disease);

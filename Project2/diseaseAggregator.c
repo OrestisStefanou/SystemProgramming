@@ -20,6 +20,22 @@ int main(int argc, char const *argv[])
     int num_of_workers=atoi(argv[1]);   //Number of workers
     pids = malloc(num_of_workers * sizeof(pid_t));
 
+    char CountriesDir[30];    //Country Directory name
+    strcpy(CountriesDir,argv[2]);
+
+    struct requestStats stats;
+    //Initialize the stats
+    stats.failedRequests=0;
+    stats.successRequests=0;
+    stats.totalRequests=0;
+
+    //Create the directory to save the logfiles
+    ret=mkdir("./logfiles",0777);
+    if(ret==-1){
+        printf("Error during creating logfiles directory\n");
+        exit(EXIT_FAILURE);
+    }
+
     //Create workers
     for(int i=0;i<num_of_workers;i++){
         pid = fork();
@@ -51,7 +67,7 @@ int main(int argc, char const *argv[])
     struct dirent *de;  //Pointer to directory entry
     int dir_counter=0;
     queuenode *dir_queue=NULL;
-    DIR *dr = opendir("./Countries");   //Here it is going to be the folder name given in cmdline arguments
+    DIR *dr = opendir(CountriesDir);   //Here it is going to be the folder name given in cmdline arguments
     if(dr ==NULL){
         printf("Could not open the directory\n");
     }
@@ -90,7 +106,7 @@ int main(int argc, char const *argv[])
             {
                 strcpy(request,"Send me the stats\n");
                 write(client_fifo_fd,request,sizeof(request));//Send the request
-                sprintf(dir_name,"%s/%s","./Countries",Hashtable[dir_counter].country);//Create the directory to send the worker
+                sprintf(dir_name,"%s/%s",CountriesDir,Hashtable[dir_counter].country);//Create the directory to send the worker
                 write(client_fifo_fd,dir_name,sizeof(request));//Send the directory name
                 close(client_fifo_fd);
                 sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
@@ -132,6 +148,8 @@ int main(int argc, char const *argv[])
         request_code = get_request_code(user_request);
 
         if(request_code==1){
+            stats.totalRequests++;
+            stats.successRequests++;
             for(int i=0;i<hashtable_size;i++){
                 printf("Country:%s,pid of worker:%d\n",Hashtable[i].country,Hashtable[i].worker_pid);
             }
@@ -139,16 +157,19 @@ int main(int argc, char const *argv[])
         }
 
         if(request_code==2){    //DiseaseFrequency
+            stats.totalRequests++;
             struct dfData info;
             int result=0; //To read from the worker
             int sum=0;    //Final result
             int error = fill_dfData(user_request,&info);//Get the info of the request
             if(error==-1){
+                stats.failedRequests++;
                 printf("Wrong usage\n");
                 continue;
             }
             //compare dates
             if(check_dates(info.entry_date,info.exit_date)){
+                stats.failedRequests++;
                 printf("Wrong dates given\n");
                 continue;
             }
@@ -159,6 +180,7 @@ int main(int argc, char const *argv[])
                     sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);  //Create the client pipe name
                     client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
                     if(client_fifo_fd==-1){
+                        stats.failedRequests++;
                         printf("Error during opening client pipe\n");
                         continue;
                     }
@@ -169,6 +191,7 @@ int main(int argc, char const *argv[])
                     sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);  //Create parent pipe name
                     server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
                     if(server_fifo_fd==-1){
+                        stats.failedRequests++;
                         printf("Error during opening server pipe\n");
                         continue;
                     }
@@ -176,6 +199,7 @@ int main(int argc, char const *argv[])
                     sum = sum + result;
                     close(server_fifo_fd);
                 }
+                stats.successRequests++;
                 printf("%d\n",sum);
             }else
             {
@@ -184,6 +208,7 @@ int main(int argc, char const *argv[])
                 sprintf(client_fifo,CLIENT_FIFO_NAME,Hashtable[index].worker_pid);  //Create the client pipe name
                 client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
                 if(client_fifo_fd==-1){
+                    stats.failedRequests++;
                     printf("Error during opening client pipe\n");
                     continue;
                 }
@@ -194,29 +219,36 @@ int main(int argc, char const *argv[])
                 sprintf(server_fifo,SERVER_FIFO_NAME,Hashtable[index].worker_pid);  //Create parent pipe name
                 server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
                 if(server_fifo_fd==-1){
+                    stats.failedRequests++;
                     printf("Error during opening server pipe\n");
                     continue;
                 }
                 read(server_fifo_fd,&result,sizeof(int));
                 sum = result;
                 close(server_fifo_fd);
+                stats.successRequests++;
                 printf("%d\n",sum);                
             } 
         }
 
         if(request_code==3){    ///topk-AgeRanges
+            stats.totalRequests++;
             int error = topkRanges(user_request);
             if(error==-1){
+                stats.failedRequests++;
                 printf("Wrong usage\n");
                 continue;
             }
+            stats.successRequests++;
         }
 
         if(request_code==4){    //searchPatientRecord
+            stats.totalRequests++;
             char rID[10];
             int error = getSearchPatientRecordId(user_request,rID);
             int flag=0;
             if(error==-1){
+                stats.failedRequests++;
                 printf("Wrong usage\n");
                 continue;
             }
@@ -226,6 +258,7 @@ int main(int argc, char const *argv[])
                 sprintf(client_fifo,CLIENT_FIFO_NAME,pids[i]);  //Create the client pipe name
                 client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
                 if(client_fifo_fd==-1){
+                    stats.failedRequests++;
                     printf("Error during opening client pipe\n");
                     continue;
                 }
@@ -236,6 +269,7 @@ int main(int argc, char const *argv[])
                 sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);  //Create parent pipe name
                 server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
                 if(server_fifo_fd==-1){
+                    stats.failedRequests++;
                     printf("Error during opening server pipe\n");
                     continue;
                 }
@@ -244,6 +278,7 @@ int main(int argc, char const *argv[])
                 read(server_fifo_fd,&response,sizeof(response));
                 close(server_fifo_fd);
                 if(response.patientAge!=-1){    //Record found
+                    stats.successRequests++;
                     if(response.patientExitDate.day!=-1){   //There is an exit date
                         printf("%s %s %s %s %d %d-%d-%d %d-%d-%d\n",response.id,response.patientName,response.patientLastName,response.patientDisease,response.patientAge,response.patientEntryDate.day,response.patientEntryDate.month,response.patientEntryDate.year,response.patientExitDate.day,response.patientExitDate.month,response.patientExitDate.year);
                     }
@@ -256,23 +291,29 @@ int main(int argc, char const *argv[])
                 }
             }
             if(flag==0){    //record not found
+                stats.successRequests++;
                 printf("Record not found\n");
             }
         }
 
         if(request_code==5){    //numPatientAdmissions
+            stats.totalRequests++;
             int error = getPatientAdmissions(user_request);
             if(error==-1){
+                stats.failedRequests++;
                 printf("Wrong usage\n");
                 continue;
             }
+            stats.successRequests++;
         }
 
         if(request_code==6){    //numPatientDischarges
+            stats.totalRequests++;
             struct PatientDischargesData data;
             int error = fillPatientDischargesData(user_request,&data);
             char newRequest[100];
             if(error==-1){
+                stats.failedRequests++;
                 printf("Wrong usage\n");
                 continue;
             }
@@ -286,6 +327,7 @@ int main(int argc, char const *argv[])
                     sprintf(client_fifo,CLIENT_FIFO_NAME,Hashtable[i].worker_pid);  //Create the client pipe name
                     client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
                     if(client_fifo_fd==-1){
+                        stats.failedRequests++;
                         printf("Error during opening client pipe\n");
                         continue;
                     }
@@ -296,6 +338,7 @@ int main(int argc, char const *argv[])
                     sprintf(server_fifo,SERVER_FIFO_NAME,Hashtable[i].worker_pid);  //Create parent pipe name
                     server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
                     if(server_fifo_fd==-1){
+                        stats.failedRequests++;
                         printf("Error during opening server pipe\n");
                         continue;
                     }
@@ -304,14 +347,21 @@ int main(int argc, char const *argv[])
                     read(server_fifo_fd,&response,sizeof(response));
                     close(server_fifo_fd);
                     printf("%s %d\n",Hashtable[i].country,response);
+                    stats.successRequests++;
                 }                    
             }else   //Country given
             {
                 int index = getHashtable_index(data.countryName);   //Get the worker's index in the HT
+                if(index==-1){
+                    stats.failedRequests++;
+                    printf("There are no data for this country\n");
+                    continue;
+                }
                 strcpy(request,"/PatientDischarges");    //Request to send the worker
                 sprintf(client_fifo,CLIENT_FIFO_NAME,Hashtable[index].worker_pid);  //Create the client pipe name
                 client_fifo_fd = open(client_fifo,O_WRONLY);    //Open worker's pipe to send the request and the info
                 if(client_fifo_fd==-1){
+                    stats.failedRequests++;
                     printf("Error during opening client pipe\n");
                     continue;
                 }
@@ -322,6 +372,7 @@ int main(int argc, char const *argv[])
                 sprintf(server_fifo,SERVER_FIFO_NAME,Hashtable[index].worker_pid);  //Create parent pipe name
                 server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
                     if(server_fifo_fd==-1){
+                    stats.failedRequests++;
                     printf("Error during opening server pipe\n");
                     continue;
                 }
@@ -330,8 +381,8 @@ int main(int argc, char const *argv[])
                 read(server_fifo_fd,&response,sizeof(response));
                 close(server_fifo_fd);
                 printf("%s %d\n",Hashtable[index].country,response);
+                stats.successRequests++;
             }
-            
         }
 
         if(request_code==7){//exit
@@ -339,6 +390,7 @@ int main(int argc, char const *argv[])
         }
 
         if(request_code==-1){
+            stats.failedRequests++;
             printf("Invalid request\n");
             continue;
         }
@@ -350,6 +402,21 @@ int main(int argc, char const *argv[])
         unlink(server_fifo);
         kill(pids[i],SIGINT);
     }
+    //Create and open the log file    
+    char logfile[50];   //To create the logfilename
+    sprintf(logfile,"./logfiles/log_file.%d",getpid());
+    FILE *fp=fopen(logfile,"w");    //Create and open the file
+    //Write the counties in the logfile
+    for(int i=0;i<hashtable_size;i++){
+        fprintf(fp,"%s\n",Hashtable[i].country);
+    }
+    //Write the stats in the lofile
+    fprintf(fp,"TOTAL %d\n",stats.totalRequests);
+    fprintf(fp,"SUCCESS %d\n",stats.successRequests);
+    fprintf(fp,"FAIL %d\n",stats.failedRequests);
+    fclose(fp);
+
+    //Free the memory
     free(pids);
     Hashtable_Free();
     exit(EXIT_SUCCESS);
