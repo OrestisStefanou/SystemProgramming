@@ -5,8 +5,15 @@
 #include"parent_functions.h"
 #include"request.h"
 
+int time_to_exit;
+
+void terminate(int sig){
+    time_to_exit=1;
+}
+
 int main(int argc, char const *argv[])
 {
+    time_to_exit=0;
     int server_fifo_fd,client_fifo_fd;  //File descriptors of server and client pipes
     File_Stats stats_data;
     int read_res;           //For error checking
@@ -143,9 +150,16 @@ int main(int argc, char const *argv[])
     //Get user's input
     char user_request[100];
     int request_code=0; //Each request will have a code
+    (void) signal(SIGINT,terminate);//Handle interrupt signal
+    (void) signal(SIGQUIT,terminate);//Handle quit signal
     while(1){
-        fgets(user_request,100,stdin);
+        fgets(user_request,100,stdin);  //Get user request
         request_code = get_request_code(user_request);
+
+        if(time_to_exit){   //Got the interrupt siganl
+            printf("Caught a signal and exiting\n");
+            break;
+        }
 
         if(request_code==1){
             stats.totalRequests++;

@@ -42,6 +42,8 @@ void terminate(int sig){
 int main(int argc, char const *argv[])
 {   
     (void) signal(SIGINT,terminate);//Handle interrupt signal from parent
+    (void) signal(SIGQUIT,terminate);
+    
     printf("Worker %d running\n",getpid());
     int server_fifo_fd,client_fifo_fd;
     char request[100];
