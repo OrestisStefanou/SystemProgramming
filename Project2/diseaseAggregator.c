@@ -14,6 +14,7 @@ void terminate(int sig){
 
 void replace_worker(int sig){
     //Find wich worker exited
+    //Send the user2 signal to the workers.The one that fails is the one that died
 }
 
 void print_help(){
@@ -107,7 +108,7 @@ int main(int argc, char const *argv[])
             }
         //this is the parent
         default:
-            printf("I created a worker with pid:%d\n",pid);
+            //printf("I created a worker with pid:%d\n",pid);
             pids[i] = pid;
             sprintf(server_fifo,SERVER_FIFO_NAME,pid);
             mkfifo(server_fifo,0777);   //Create the pipe that we read from the worker

@@ -135,7 +135,7 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
             if(strcmp(record->status,"EXIT")==0){
                 //Check for error
                 if(RecordTreesearch(myData->InPatients,record)==0){//Record not found in the "ENTER" patients tree
-                    printf("Patient not in 'ENTER' records\n");
+                    printf("ERROR\n");
                     continue;
                 }
                 //If not found insert it in the "EXIT" patients tree
