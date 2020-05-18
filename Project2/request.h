@@ -335,4 +335,29 @@ int fillPatientDischargesData(char *buf,struct PatientDischargesData *data){
     data->countryName[j]='\0';
     return 0;
 }
+
+int getSiganlCountry(char *buf,char *c){
+    int i=0,j=0;
+    //Skip request command
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        i++;
+    }
+    if(buf[i]=='\n'){
+        return -1;
+    }
+    i++;
+
+    //Get country name
+    while(buf[i]!=' ' && buf[i]!='\n'){
+        c[j] = buf[i];
+        j++;
+        i++;
+    }
+    if(buf[i]==' '){
+        return -1;
+    }
+    i++;
+    c[j]='\0';
+    return 0;   
+}
 #endif /* REQUEST_H_ */

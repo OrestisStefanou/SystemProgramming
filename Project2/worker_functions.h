@@ -140,9 +140,6 @@ void send_file_stats(char *server_fifo,queuenode *requests,struct WorkersDataStr
                 }
                 //If not found insert it in the "EXIT" patients tree
                 myData->OutPatients=add_Recordtree_node(myData->OutPatients,record);
-                //THINK IF YOU HAVE TO INSERT THEM IN THE HASHTABLE HERE
-                //DiseaseHashTableInsert(myData->DiseaseHashTable,record,myData->hashtablesize);  //Update the hashtable
-                //statsListUpdate(&filestats,record,country_name);    //Update the stats
             }else   //Patient has "ENTER" status
             {
                 myData->InPatients=add_Recordtree_node(myData->InPatients,record);//Insert the record in the "ENTER" patients tree

@@ -35,6 +35,12 @@ int get_request_code(char *buf){
     if (strcmp(request,"/numPatientDischarges")==0){
         return 6;
     }
+    if (strcmp(request,"/sendSIGUSR1")==0){
+        return 8;
+    }
+    if (strcmp(request,"help")==0){
+        return 9;
+    }
     return -1;  //In case of invalid request
 }
 //Bubble sort function

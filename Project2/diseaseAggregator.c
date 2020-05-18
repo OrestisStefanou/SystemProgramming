@@ -9,10 +9,51 @@ int time_to_exit;
 
 void terminate(int sig){
     time_to_exit=1;
+    (void) signal(SIGINT, SIG_DFL);
+}
+
+void replace_worker(int sig){
+    //Find wich worker exited
+}
+
+void print_help(){
+    printf("All commands:\n");
+    printf("/listCountries\n");
+    printf("/diseaseFrequency virusName date1 date2 [country]\n");
+    printf("/topk-AgeRanges k country disease date1 date2\n");
+    printf("/searchPatientRecord recordID\n");
+    printf("/numPatientAdmissions disease date1 date2 [country]\n");
+    printf("/numPatientDischarges disease date1 date2 [country]\n");
+    printf("/exit\n");
+}
+
+void print_usage(){
+    printf("Usage is:\n./diseaseAggregator –w numWorkers -b bufferSize -i input_dir\n");
 }
 
 int main(int argc, char const *argv[])
 {
+    if (argc!=7)
+    {
+        print_usage();
+        exit(EXIT_FAILURE);
+    }
+    
+    if(strcmp(argv[1],"-w")!=0){
+        print_usage();
+        exit(EXIT_FAILURE);
+    }
+
+    if(strcmp(argv[3],"-b")!=0){
+        print_usage();
+        exit(EXIT_FAILURE);
+    }
+
+    if(strcmp(argv[5],"-i")!=0){
+        print_usage();
+        exit(EXIT_FAILURE);
+    }
+
     time_to_exit=0;
     int server_fifo_fd,client_fifo_fd;  //File descriptors of server and client pipes
     File_Stats stats_data;
@@ -24,11 +65,17 @@ int main(int argc, char const *argv[])
     int ret;                //For error checking
     pid_t *pids;    //Array with the pids of the workers
 
-    int num_of_workers=atoi(argv[1]);   //Number of workers
+    int num_of_workers=atoi(argv[2]);   //Number of workers
     pids = malloc(num_of_workers * sizeof(pid_t));
 
     char CountriesDir[30];    //Country Directory name
-    strcpy(CountriesDir,argv[2]);
+    strcpy(CountriesDir,argv[6]);
+
+    int bufferSize=atoi(argv[4]);
+    if(bufferSize<4){
+        printf("BUffer size must be at lest 4 bytes\n");
+        exit(1);
+    }
 
     struct requestStats stats;
     //Initialize the stats
@@ -178,7 +225,7 @@ int main(int argc, char const *argv[])
             int error = fill_dfData(user_request,&info);//Get the info of the request
             if(error==-1){
                 stats.failedRequests++;
-                printf("Wrong usage\n");
+                printf("Wrong usage(type help for info)\n");
                 continue;
             }
             //compare dates
@@ -250,7 +297,7 @@ int main(int argc, char const *argv[])
             int error = topkRanges(user_request);
             if(error==-1){
                 stats.failedRequests++;
-                printf("Wrong usage\n");
+                printf("Wrong usage(type help for info)\n");
                 continue;
             }
             stats.successRequests++;
@@ -263,7 +310,7 @@ int main(int argc, char const *argv[])
             int flag=0;
             if(error==-1){
                 stats.failedRequests++;
-                printf("Wrong usage\n");
+                printf("Wrong usage(type help for info)\n");
                 continue;
             }
             //Send the request to all the workers
@@ -315,7 +362,7 @@ int main(int argc, char const *argv[])
             int error = getPatientAdmissions(user_request);
             if(error==-1){
                 stats.failedRequests++;
-                printf("Wrong usage\n");
+                printf("Wrong usage(type help for info)\n");
                 continue;
             }
             stats.successRequests++;
@@ -328,7 +375,7 @@ int main(int argc, char const *argv[])
             char newRequest[100];
             if(error==-1){
                 stats.failedRequests++;
-                printf("Wrong usage\n");
+                printf("Wrong usage(type help for info)\n");
                 continue;
             }
             if(data.countryName[0]==0){ //Country not given
@@ -398,14 +445,40 @@ int main(int argc, char const *argv[])
                 stats.successRequests++;
             }
         }
+        
+        if(request_code==8){    //sendSIGUSR1 signal
+            stats.totalRequests++;
+            char country[25];
+            int error=getSiganlCountry(user_request,country);
+            if(error==-1){
+                stats.failedRequests++;
+                printf("Wrong usage(type help for info)\n");
+                continue;
+            }
+            int index=getHashtable_index(country);
+            kill(Hashtable[index].worker_pid,SIGUSR1);//Send signal to check the dirs
+            sprintf(server_fifo,SERVER_FIFO_NAME,Hashtable[index].worker_pid);
+            server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+            while(read_res = read(server_fifo_fd,&stats_data,sizeof(stats_data))>0){//Get the stats from the worker
+                //File_Stats_Print(&stats_data);
+                Hashtable[index].StatsTree = add_FileStatsTree_node(Hashtable[index].StatsTree,stats_data);   //Insert them in the tree
+            }
+            close(server_fifo_fd);
+            stats.successRequests++;
+        }
 
         if(request_code==7){//exit
             break;
         }
 
+        if(request_code==9){
+            print_help();
+            continue;
+        }
+
         if(request_code==-1){
             stats.failedRequests++;
-            printf("Invalid request\n");
+            printf("Invalid request(type help for info)\n");
             continue;
         }
     }
