@@ -107,7 +107,9 @@ void date_list_insert(dateListptr *ptraddr,char *filedate){
             strcpy((*ptraddr)->stringDate,filedate);
             (*ptraddr)->next=temp_ptr;
             (*ptraddr)->prev = temp_ptr->prev;
-            temp_ptr->prev->next = *ptraddr;
+            if(temp_ptr->prev!=NULL){
+                temp_ptr->prev->next = *ptraddr;
+            }
             temp_ptr->prev = *ptraddr;
             return;
         }

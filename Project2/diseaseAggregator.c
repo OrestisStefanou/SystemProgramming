@@ -6,6 +6,9 @@
 #include"request.h"
 
 int time_to_exit;
+pid_t *pids;    //Array with the pids of the workers
+int num_of_workers; //Number of workers we created
+char CountriesDir[30];    //Country Directory name
 
 void terminate(int sig){
     time_to_exit=1;
@@ -14,7 +17,79 @@ void terminate(int sig){
 
 void replace_worker(int sig){
     //Find wich worker exited
-    //Send the user2 signal to the workers.The one that fails is the one that died
+    //Send the usr2 signal to the workers.The one that fails is the one that died
+    printf("A worker died..Trying to replace it...\n");
+    int error;
+    int old_pid;    //pid of worker that terminated
+    int new_pid;    //pid of the worker to replace it
+    int ret;    //for error checking
+    char *args[]={"./worker",NULL}; //For exec()
+    char server_fifo[256];  //To save the server fifo name
+    char client_fifo[256];  //To save the client fifo name
+    char request[100];
+    char dir_name[100];
+    int read_res;
+    File_Stats stats_data;
+
+    for(int i=0;i<hashtable_size;i++){
+        error = kill(Hashtable[i].worker_pid,SIGUSR2);
+        if(error==-1){  //We found the worker that terminated
+            old_pid = Hashtable[i].worker_pid;
+            printf("Worker with pid:%d died\n",old_pid);
+            new_pid = fork();
+            switch (new_pid)
+            {
+            case -1:
+                perror("fork failed");
+                exit(1);
+            //This is the child
+            case 0:
+                ret = execvp(args[0],args);//Start worker process
+                if(ret==-1){
+                    perror("execvp");
+                    exit(1);
+                }
+            //this is the parent
+            default:
+                //printf("I created a worker with pid:%d\n",pid);
+                //Replace the old pid with the new one
+                for(int i=0;i<num_of_workers;i++){
+                    if(pids[i]==old_pid){
+                        pids[i]=new_pid;
+                        break;
+                    }
+                }
+                sprintf(server_fifo,SERVER_FIFO_NAME,new_pid);
+                mkfifo(server_fifo,0777);   //Create the pipe that we read from the worker
+                break;
+            }
+            break;
+        }
+    }
+    int client_fifo_fd,server_fifo_fd;
+
+    for(int i=0;i<hashtable_size;i++){
+        if(Hashtable[i].worker_pid==old_pid){
+            sprintf(client_fifo,CLIENT_FIFO_NAME,new_pid);  //Create worker's pipe name
+            client_fifo_fd = open(client_fifo,O_WRONLY);    //Open the worker's pipe to send the directories
+            if (client_fifo_fd!=-1)
+            {
+                strcpy(request,"Send me the stats\n");
+                write(client_fifo_fd,request,sizeof(request));//Send the request
+                sprintf(dir_name,"%s/%s",CountriesDir,Hashtable[i].country);//Create the directory to send the worker
+                write(client_fifo_fd,dir_name,sizeof(dir_name));//Send the directory name
+                close(client_fifo_fd);
+                sprintf(server_fifo,SERVER_FIFO_NAME,pids[i]);
+                server_fifo_fd = open(server_fifo,O_RDONLY);    //Open the pipe to read from worker
+                while(read_res = read(server_fifo_fd,&stats_data,sizeof(stats_data))>0){//Get the stats from the worker
+                    //Ignore them because we already have them
+                }
+                close(server_fifo_fd);
+                Hashtable[i].worker_pid=new_pid;  //Save the worker's pid in the hashtable
+            }
+        }
+    }
+    printf("Worker replaced\n");
 }
 
 void print_help(){
@@ -64,12 +139,10 @@ int main(int argc, char const *argv[])
     pid_t pid;              //For fork()
     char *args[]={"./worker",NULL}; //For exec()
     int ret;                //For error checking
-    pid_t *pids;    //Array with the pids of the workers
 
-    int num_of_workers=atoi(argv[2]);   //Number of workers
+    num_of_workers=atoi(argv[2]);   //Number of workers
     pids = malloc(num_of_workers * sizeof(pid_t));
 
-    char CountriesDir[30];    //Country Directory name
     strcpy(CountriesDir,argv[6]);
 
     int bufferSize=atoi(argv[4]);
@@ -200,6 +273,8 @@ int main(int argc, char const *argv[])
     int request_code=0; //Each request will have a code
     (void) signal(SIGINT,terminate);//Handle interrupt signal
     (void) signal(SIGQUIT,terminate);//Handle quit signal
+    //(void) signal(SIGCHLD,replace_worker);//Handle child signal
+
     while(1){
         fgets(user_request,100,stdin);  //Get user request
         request_code = get_request_code(user_request);
