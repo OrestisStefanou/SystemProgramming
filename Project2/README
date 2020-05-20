@@ -27,6 +27,10 @@ dentro ine taksinomimeno me vasi tin imeronia
 6)Mia lista opu kratame prosorina taksinomimenes tis imerominies tu directory pu xirizete o worker
 7)Mia lista(oura) opu kratame ta request pu stelni o parent
 
+Otan ksekina i parent diergasia dimiurga ena directory sto opoio tha topothetithun ola ta logiles kai sti sinexia me tin xrisi exec dimiugra tus workers.Diavazi to directory me 
+tis xores kai enimeroni to Hashtable.Sti sinexia stelni stous workers ta directories pu tha analavun kai enimeroni to hashtable me ta worker's pids.Diavazi ta statistika pu tu 
+stelnun oi workers kai ta topotheti sto dentro me ta statistika.(Diaforetiko gia kathe xora).Meta perimeni isodo apo ton xristi
+
 Tropos Epikinonias:
 Xrisimopoio 2 pipes gia tin epikinonia metaxi parent kai worker((Ksexorista gia kathe worker)),ena gia na diavazi o parent kai ena gia na grafi(kai antitheta gia ton worker).Oi 
 worker anigun to pipe apo to opio diavazun kai mplokarun mexri na to aniksi kai o parent.Otan o parent theli na epikinonisi me kapio worker anigi to pipe tu gia grapsimo kai 
@@ -36,7 +40,7 @@ tha diavasi stin sinexia.
 Statistika apo ton worker ston parent:
 O parent meso tu hashtable tou kai tu pinaka pu kratai ta pid ton worker stelni se kathe worker ena aitima "send me the stats" mazi me to onoma tis xoras(directory) pu tha ine
 ipeuthinos.O worker diavazi to directory,taksinomoi ta arxia,kai meta afou diavasi ta arxia ena ena,stelni ta statistika ston parent.Otan o worker diavasi to aitima "send me
-the stats" kseri oti stin oura me ta request iparxi to onoma tu directory pu prepi na diavasi
+the stats" kseri oti stin oura me ta request iparxi to onoma tu directory pu prepi na diavasi.
 
 /listCountries:
 O parent meso tu hashtable apla tiponi se kathe thesi tu pinaka ti xora kai to pid tou worker pu tin diaxirizete
