@@ -1,0 +1,73 @@
+Orestis Stefanou
+AM:1115201700217
+
+Me tin entoli make dimiurgountai ta ektelesima arxia.Prota trexume to script gia tin dimiurgia ton directories.Paradigma ektelesis script:
+./create_infiles.sh diseases.txt countries.txt ./Countries 10 10
+Paradigma ektelesis efarmogis:
+./diseaseAggregator –w 10 -b 100 -i ./Countries
+make clean gia tin diagrafi ton ektelesimon
+
+Domes pu ilopoiisa:
+Genikes Domes:
+1)Mia domi me 3 akeraious pu anaparistun mia imerominia
+2)Domi file statistics stin opia kratame ta statistika gia kathe imerominia
+4)Domi patientRecord stin opia kratame ta stixia mias eggrafis
+3)Domi requsestStats opu kratame statistika ton request pu ektelestikan(sinolo,epitiximena,apotiximena)
+Domes Parent:
+1)Enas pinakas me ta pid's ton worker
+2)Ena hashtable pu se kathe thesi tu pinaka exume to onoma mias xoras(key),to pid tu worker pu ine ipeuthino gia ti xora auti,kai dikti stin riza dentrou pu kratame
+ta statistika gia ti sigkekrimeni xora.To dentro ine taksinomimeno me vasi tin imerominia ton statistikon
+Domes Worker:
+1)Ena binary tree sto opio kratame diktes sta "ENTER" patientRecord kai ine taksinomimeno me vasi to recordID tis eggrafis
+2)Ena binary tree sto opio kratame diktes sta "EXIT" patientRecord kai ine taksinomimeno me vasi to recordID tis eggrafis
+3)Ena binary tree sto opio kratame ta onomata ton arxion pu diavase o worker kai ine taksinomimeno me vasi to onoma tu arxiou
+4)Ena hashtable pu se kathe thesi kratame to onoma mias asthenias(key),kai dikti se riza dentrou opou kratame diktes me "ENTER" patientRecord me tin sigkekrimeni asthenia.To
+dentro ine taksinomimeno me vasi tin imeronia
+5)Mia lista stin opia kratame ta onomata ton directories pu ine ipeuthinos o worker
+6)Mia lista opu kratame prosorina taksinomimenes tis imerominies tu directory pu xirizete o worker
+7)Mia lista(oura) opu kratame ta request pu stelni o parent
+
+Tropos Epikinonias:
+Xrisimopoio 2 pipes gia tin epikinonia metaxi parent kai worker((Ksexorista gia kathe worker)),ena gia na diavazi o parent kai ena gia na grafi(kai antitheta gia ton worker).Oi 
+worker anigun to pipe apo to opio diavazun kai mplokarun mexri na to aniksi kai o parent.Otan o parent theli na epikinonisi me kapio worker anigi to pipe tu gia grapsimo kai 
+stelni ena aitima.Stin sinexia o parent anigi to pipe tu gia diavasma kai mplokari mexri o worker na tu apantisi.O worker analoga me to aitima pu tu stelni o parent kseri ti
+tha diavasi stin sinexia.
+
+Statistika apo ton worker ston parent:
+O parent meso tu hashtable tou kai tu pinaka pu kratai ta pid ton worker stelni se kathe worker ena aitima "send me the stats" mazi me to onoma tis xoras(directory) pu tha ine
+ipeuthinos.O worker diavazi to directory,taksinomoi ta arxia,kai meta afou diavasi ta arxia ena ena,stelni ta statistika ston parent.Otan o worker diavasi to aitima "send me
+the stats" kseri oti stin oura me ta request iparxi to onoma tu directory pu prepi na diavasi
+
+/listCountries:
+O parent meso tu hashtable apla tiponi se kathe thesi tu pinaka ti xora kai to pid tou worker pu tin diaxirizete
+
+/diseaseFrequency:
+An den dothi xora tote o parent stelni se olous tous worker request "/diseaseFrequency" kai meta to aitima tu xristi(opos dothike apo ton xristi).Otan o worker diavasi to
+request "/diseaseFrequency" kseri oti stin oura me ta request iparxi to aitima tu xristi to opio epeksergazete kai meso ton domon tu stelni to apotelesma ston parent.O parent 
+prostheti ta apotelesmata pu estilan oi workers kai tiponi to teliko apotelesma.An dothi xora i diadikasia ine i idia me ti diafora oti stelnume mono ston worker pou
+diaxirizete ti xora auti.(vriskume pios worker ine meso tu hashtable)
+
+/topk-AgeRanges k country disease date1 date2:
+Se auto to erotima den iparxi epikinonia me tous worker afou exume ta statistika pu mas estilan kai mporume na ta aksiopoiisume.Meso tu hashtable vriskume to dentro sto 
+opoio kratame ta statistika gia ti xora pu zitate.
+
+/searchPatientRecord recordID:
+O parent stelni se ena ena worker request "/searchPatient" kai meta stelni to aitima tu xristi.Otan o worker diavasi to proto request kseri oti stin oura me ta request 
+ipaxri to aitima tou xristi.Epeksergazete to aitima kai stelni to apotelesma ston parent.An o parent pari kapio thetiko apotelesma den stelni request stus ipoloipous 
+workers.
+
+/numPatientAdmissions:
+Se auto to erotima episis den iparxi epikinonia me tous workers.An den dothi xora prospelame ola ta dentra pu iparxun sto hashtable gia na parume ta apotelesmata pu 
+psxanume.An dothi xora prospelame mono to dentro me ta statistika tis xoras pu psxanume.
+
+/numPatientDischarges:
+An den dothi xora tote o parent stelni se olous tous worker request "/diseaseFrequency" kai meta to aitima tu xristi(opos dothike apo ton xristi).Otan o worker diavasi to
+request "/numPatientDischarges" kseri oti stin oura me ta request iparxi to aitima tu xristi to opio epeksergazete kai meso ton domon tu stelni to apotelesma ston parent.O parent 
+diavazi to apotelesma kai to tiponi mazi me ti xora(vriski tin xora meso tu Hashtable).An dothi xora i diadikasia ine i idia me ti diafora oti stelnume mono ston worker pou
+diaxirizete ti xora auti.(vriskume pios worker ine meso tu hashtable)
+
+/exit
+O parent stelni to sima SIGINT stus workers oi opoioi otan to lavun dimiurgun ta logfiles tus,eleutheronun tin opoia mnimi exun desmeusi kai diagrafun ta pipes tus.O parent me ti sira tu 
+dimiugra to logfile tou,eleutheroni tin diki tu mnimi kai diagrafi ta pipe tou.
+
+Oles oi sinartisis pu xrisimopoiisa gia tin ilopoiisi ton parapano erotimaton vriskontai sta arxia Worker_Data_Structures.h kai Parent_Data_Structures.h
