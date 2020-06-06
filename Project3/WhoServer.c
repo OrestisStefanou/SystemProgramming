@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include"buffer.h"
 
 #define perror2(s, e) fprintf(stderr, "%s: %s\n", s, strerror(e))
 #define BACKLOG 10
@@ -30,37 +31,7 @@ pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cvar;    //Condition variable
 pthread_t *pthreads;    //Array with thread ids
 
-int *fd_buffer;          //File descriptor buffer
-int buffer_size;
 int number_of_threads = 4;
-
-//Initialize buffer
-void buffer_init(){
-    for(int i=0;i<buffer_size;i++){
-        fd_buffer[i]=0;
-    }
-}
-
-//Check if buffer is empty.Returns 1 if buffer is empty else returns 0
-int buffer_is_empty(){
-    for(int i=0;i<buffer_size;i++){
-        if (fd_buffer[i]!=0)
-        {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-//Check if buffer is full.Returns 1 if buffer is full else returns 0
-int buffer_is_full(){
-    for(int i=0;i<buffer_size;i++){
-        if(fd_buffer[i]==0){
-            return 0;
-        }
-    }
-    return 1;
-}
 
 int main(int argc, char const *argv[])
 {
@@ -153,7 +124,7 @@ int main(int argc, char const *argv[])
             pthread_cond_wait(&cvar,&mtx);  //wait for signal
         }
         //Entering new socket from connection in the buffer
-        fd_buffer[0] = new_socket_fd;   //Normally here i have to find an available index in the buffer
+        buffer_insert(new_socket_fd);   //Enter the new socket fd in the buffer
         pthread_cond_signal(&cvar);     //Wake one thread to handle the connection
         //Unlock the mutex
         if (err=pthread_mutex_unlock(&mtx))
@@ -181,8 +152,7 @@ void *serve_client(void *arg){
         }
         //Find the socket in the buffer
         printf("Thread handling the connection\n");
-        int new_socket_fd = fd_buffer[0];
-        fd_buffer[0] = 0;   //Free the position for another connection
+        int new_socket_fd = buffer_get();   //Get the file descriptor of the new connection
         //Unlock the mutex
         if (err=pthread_mutex_unlock(&mtx))
         {
